@@ -1,2 +1,8 @@
 __pycache__
 .venv/
+
+# Open csv files
+*.csv#
+
+# The cleaned data
+mental_healthCleaned.csv
