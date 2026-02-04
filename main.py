@@ -1,4 +1,5 @@
 from sklearn.preprocessing import MinMaxScaler
+import numpy as np
 import pandas
 import math
 import os
@@ -32,8 +33,10 @@ if __name__ == "__main__":
         if not rawData[column].isnull().any() and set(
             rawData[column].dropna().unique()
         ).issubset({"Yes", "No", "Maybe"}):
-            oneHot = pandas.get_dummies(rawData[column], prefix=column)
-            cleanedData = pandas.concat([cleanedData, oneHot], axis=1)
+            categories = ["Yes", "No", "Maybe"]  # fixed order
+            cleanedData[column] = rawData[column].apply(
+                lambda x: np.eye(len(categories))[categories.index(x)]
+            )
             del rawData[column]
 
     # How many employees does your company or organization have?
@@ -46,16 +49,20 @@ if __name__ == "__main__":
         "More than 1000": math.log(1500),
         pandas.NA: -1,
     }
-    cleanedData["How many employees does your company or organization have?"] = (
-        minMaxScaler.fit_transform(
-            rawData["How many employees does your company or organization have?"]
-            .map(sizeMapping)
-            .to_frame()
+    scaled = minMaxScaler.fit_transform(
+        rawData["How many employees does your company or organization have?"]
+        .map(sizeMapping)
+        .to_frame()
+    ).ravel()
+    cleanedData["How many employees does your company or organization have?"] = [
+        np.array([v, int(notna)])
+        for v, notna in zip(
+            scaled,
+            rawData[
+                "How many employees does your company or organization have?"
+            ].notna(),
         )
-    )
-    cleanedData["CompanySizeKnown"] = (
-        rawData["How many employees does your company or organization have?"].notna()
-    ).astype(int)
+    ]
     del rawData["How many employees does your company or organization have?"]
 
     # Print the number of columns
