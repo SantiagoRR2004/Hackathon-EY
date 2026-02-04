@@ -1,5 +1,7 @@
 from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.metrics import ConfusionMatrixDisplay
 from sklearn.decomposition import PCA
+import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 import json
@@ -69,9 +71,9 @@ def calculateCorrelationsMatrix(data: pd.DataFrame) -> pd.DataFrame:
             heatmapDf.loc[col1, col2] = score
             heatmapDf.loc[col2, col1] = score
 
-    # Fill diagonal with 1
+    # Fill diagonal with 0
     for i in range(len(heatmapDf)):
-        heatmapDf.iloc[i, i] = 1
+        heatmapDf.iloc[i, i] = 0
 
     return heatmapDf
 
@@ -107,18 +109,26 @@ def indexCorrelation() -> None:
     with open(os.path.join(dataFolder, "indexes.json"), "r") as f:
         indexes = json.load(f)
 
-    # Mental Health Support Index
-    print(
-        calculateCorrelationsMatrix(
-            cleanData[
-                [
-                    col
-                    for col in indexes["Mental Health Support Index"]
-                    if col in cleanData.columns
-                ]
-            ]
+    groups = [
+        "Mental Health Support Index",
+        "Workplace Stigma Index",
+        "Organizational Openness Score",
+    ]
+
+    for g in groups:
+        # Calculate the correlation matrix for the current group
+        matrix = calculateCorrelationsMatrix(
+            cleanData[[col for col in indexes[g] if col in cleanData.columns]]
         )
-    )
+
+        disp = ConfusionMatrixDisplay(
+            confusion_matrix=matrix.to_numpy(), display_labels=matrix.columns
+        )
+        disp.plot(values_format=".2f")
+        plt.title(g)
+
+        # Save the figure
+        plt.savefig(os.path.join(dataFolder, f"{g.replace(' ', '')}.png"))
 
 
 if __name__ == "__main__":

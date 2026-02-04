@@ -8,3 +8,6 @@ __pycache__
 # The cleaned data
 mental_healthCleaned.csv
 mental_healthRemaining.csv
+
+# Images
+*.png
