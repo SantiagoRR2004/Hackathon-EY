@@ -137,6 +137,54 @@ def companySize(rawData: pandas.DataFrame, cleanedData: pandas.DataFrame) -> Non
     del rawData["How many employees does your company or organization have?"]
 
 
+def easy(rawData: pandas.DataFrame, cleanedData: pandas.DataFrame) -> None:
+    """
+    This function is used to clean columns that have values related
+    to how easy or difficult something is.
+
+    We map the values to a scale from 0 to 1, where 0 is very easy and 1 is very difficult.
+    We also create a binary indicator for "I don't know" and for missing values.
+
+    Args:
+        - rawData: The raw data
+        - cleanedData: The cleaned data
+
+    Returns:
+        - None
+    """
+    mapping = {
+        "Very easy": 0,
+        "Somewhat easy": 0.25,
+        "Neither easy nor difficult": 0.5,
+        "Somewhat difficult": 0.75,
+        "Very difficult": 1,
+        "I don't know": -1,
+    }
+
+    for column in rawData.columns:
+        hasMissing = int(rawData[column].isnull().any())
+        uniqueValues = set(rawData[column].dropna().unique())
+
+        if uniqueValues == set(mapping.keys()):
+
+            # Basic Mapping
+            values = [mapping.get(x, -1) for x in rawData[column]]
+
+            # I don't know column
+            values = [
+                [v, int(x == "I don't know")] for v, x in zip(values, rawData[column])
+            ]
+
+            # Missing value column
+            if hasMissing:
+                values = [
+                    v + [int(pandas.isna(x))] for v, x in zip(values, rawData[column])
+                ]
+
+            cleanedData[column] = [np.array(v) for v in values]
+            del rawData[column]
+
+
 def cleanData() -> None:
     """
     Clean the mental health dataset and save the cleaned and remaining data.
@@ -176,6 +224,9 @@ def cleanData() -> None:
 
     # How many employees does your company or organization have?
     companySize(rawData, cleanedData)
+
+    # Columns with easy/difficult values
+    easy(rawData, cleanedData)
 
     # Print the number of columns
     print(f"Number of cleaned columns: {cleanedData.shape[1]}")
