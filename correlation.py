@@ -6,7 +6,45 @@ import json
 import os
 
 
-def calculateCorrelations(data: pd.DataFrame) -> pd.DataFrame:
+def calculateCorrelation(col1: pd.Series, col2: pd.Series) -> float:
+    """
+    This function calculates the correlation between two columns.
+
+    Because some columns can be vectors, we use PCA to reduce the dimensionality
+    of the bigger vector to the smaller one, and then calculate the cosine similarity.
+
+    Args:
+        - col1 (pd.Series): The first column
+        - col2 (pd.Series): The second column
+
+    Returns:
+        - (float): The correlation score between the two columns
+    """
+    # Change around so vectors col1 < col2
+    if len(col1[0]) > len(col2[0]):
+        col1, col2 = col2, col1
+
+    nCompo = len(col1[0])
+
+    pca = PCA(n_components=nCompo)
+    transformed = pca.fit_transform(
+        np.hstack(
+            [
+                np.vstack(col2.to_numpy()),
+            ]
+        )
+    )
+
+    # Make sure the lengths match
+    assert len(col1[0]) == len(transformed[0])
+
+    # Cosine similarity
+    score = cosine_similarity(np.vstack(col1), transformed).flatten().mean()
+
+    return score
+
+
+def calculateCorrelationsMatrix(data: pd.DataFrame) -> pd.DataFrame:
     """
     This function calculates the correlation matrix of the given data.
 
@@ -24,27 +62,8 @@ def calculateCorrelations(data: pd.DataFrame) -> pd.DataFrame:
             col1 = data.columns[i]
             col2 = data.columns[j]
 
-            # Change around so vectors col1 < col2
-            if len(data[col1][0]) > len(data[col2][0]):
-                col1, col2 = col2, col1
-
-            nCompo = len(data[col1][0])
-
-            pca = PCA(n_components=nCompo)
-            transformed = pca.fit_transform(
-                np.hstack(
-                    [
-                        np.vstack(data[col2].to_numpy()),
-                    ]
-                )
-            )
-
-            assert len(data[col1][0]) == len(transformed[0])
-
-            # Cosine similarity
-            score = (
-                cosine_similarity(np.vstack(data[col1]), transformed).flatten().mean()
-            )
+            # Calculate correlation
+            score = calculateCorrelation(data[col1], data[col2])
 
             # Symmetric matrix
             heatmapDf.loc[col1, col2] = score
@@ -90,7 +109,7 @@ def indexCorrelation() -> None:
 
     # Mental Health Support Index
     print(
-        calculateCorrelations(
+        calculateCorrelationsMatrix(
             cleanData[
                 [
                     col
