@@ -5,6 +5,94 @@ import math
 import os
 
 
+def binaryNoMissing(rawData: pandas.DataFrame, cleanedData: pandas.DataFrame) -> None:
+    """
+    This function is used to clean binary columns with no missing values.
+
+    We simply move them to the cleaned data.
+
+    Args:
+        - rawData: The raw data
+        - cleanedData: The cleaned data
+
+    Returns:
+        - None
+    """
+    # Find 0 and 1 columns with no missing values
+    for column in rawData.columns:
+        if not rawData[column].isnull().any() and set(
+            rawData[column].dropna().unique()
+        ).issubset({0, 1}):
+            cleanedData[column] = rawData[column]
+            del rawData[column]
+
+
+def yesNoMaybe(rawData: pandas.DataFrame, cleanedData: pandas.DataFrame) -> None:
+    """
+    This function is used to clean columns with Yes/No/Maybe values.
+
+    We one-hot encode them.
+
+    Args:
+        - rawData: The raw data
+        - cleanedData: The cleaned data
+
+    Returns:
+        - None
+    """
+    for column in rawData.columns:
+        if not rawData[column].isnull().any() and set(
+            rawData[column].dropna().unique()
+        ).issubset({"Yes", "No", "Maybe"}):
+            categories = ["Yes", "No", "Maybe"]  # fixed order
+            cleanedData[column] = rawData[column].apply(
+                lambda x: np.eye(len(categories))[categories.index(x)]
+            )
+            del rawData[column]
+
+
+def companySize(rawData: pandas.DataFrame, cleanedData: pandas.DataFrame) -> None:
+    """
+    This function is used to clean the column:
+        How many employees does your company or organization have?
+
+    We map the ranges to their midpoints and apply a log transformation and
+    Min-Max scaling. We also create a binary indicator for missing values.
+
+    Args:
+        - rawData: The raw data
+        - cleanedData: The cleaned data
+
+    Returns:
+        - None
+    """
+    minMaxScaler = MinMaxScaler()
+    sizeMapping = {
+        "1-5": math.log((1 + 5) / 2),
+        "6-25": math.log((6 + 25) / 2),
+        "26-100": math.log((26 + 100) / 2),
+        "100-500": math.log((100 + 500) / 2),
+        "500-1000": math.log((500 + 1000) / 2),
+        "More than 1000": math.log(1500),
+        pandas.NA: -1,
+    }
+    scaled = minMaxScaler.fit_transform(
+        rawData["How many employees does your company or organization have?"]
+        .map(sizeMapping)
+        .to_frame()
+    ).ravel()
+    cleanedData["How many employees does your company or organization have?"] = [
+        np.array([v, int(notna)])
+        for v, notna in zip(
+            scaled,
+            rawData[
+                "How many employees does your company or organization have?"
+            ].notna(),
+        )
+    ]
+    del rawData["How many employees does your company or organization have?"]
+
+
 def cleanData() -> None:
     """
     Clean the mental health dataset and save the cleaned and remaining data.
@@ -33,52 +121,14 @@ def cleanData() -> None:
 
     cleanedData = pandas.DataFrame()
 
-    minMaxScaler = MinMaxScaler()
-
     # Find 0 and 1 columns with no missing values
-    for column in rawData.columns:
-        if not rawData[column].isnull().any() and set(
-            rawData[column].dropna().unique()
-        ).issubset({0, 1}):
-            cleanedData[column] = rawData[column]
-            del rawData[column]
+    binaryNoMissing(rawData, cleanedData)
 
     # Columns with only Yes/No/Maybe values
-    for column in rawData.columns:
-        if not rawData[column].isnull().any() and set(
-            rawData[column].dropna().unique()
-        ).issubset({"Yes", "No", "Maybe"}):
-            categories = ["Yes", "No", "Maybe"]  # fixed order
-            cleanedData[column] = rawData[column].apply(
-                lambda x: np.eye(len(categories))[categories.index(x)]
-            )
-            del rawData[column]
+    yesNoMaybe(rawData, cleanedData)
 
     # How many employees does your company or organization have?
-    sizeMapping = {
-        "1-5": math.log((1 + 5) / 2),
-        "6-25": math.log((6 + 25) / 2),
-        "26-100": math.log((26 + 100) / 2),
-        "100-500": math.log((100 + 500) / 2),
-        "500-1000": math.log((500 + 1000) / 2),
-        "More than 1000": math.log(1500),
-        pandas.NA: -1,
-    }
-    scaled = minMaxScaler.fit_transform(
-        rawData["How many employees does your company or organization have?"]
-        .map(sizeMapping)
-        .to_frame()
-    ).ravel()
-    cleanedData["How many employees does your company or organization have?"] = [
-        np.array([v, int(notna)])
-        for v, notna in zip(
-            scaled,
-            rawData[
-                "How many employees does your company or organization have?"
-            ].notna(),
-        )
-    ]
-    del rawData["How many employees does your company or organization have?"]
+    companySize(rawData, cleanedData)
 
     # Print the number of columns
     print(f"Number of cleaned columns: {cleanedData.shape[1]}")
