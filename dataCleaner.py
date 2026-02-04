@@ -185,6 +185,45 @@ def easy(rawData: pandas.DataFrame, cleanedData: pandas.DataFrame) -> None:
             del rawData[column]
 
 
+def pipes(rawData: pandas.DataFrame, cleanedData: pandas.DataFrame) -> None:
+    """
+    This function is used to clean columns that use pipes to separate multiple values.
+
+    If the category is present, we set the corresponding index to 1, otherwise 0.
+
+    Args:
+        - rawData: The raw data
+        - cleanedData: The cleaned data
+
+    Returns:
+        - None
+    """
+    columnNames = [
+        "If maybe, what condition(s) do you believe you have?",
+        "If so, what condition(s) were you diagnosed with?",
+        "Which of the following best describes your work position?",
+    ]
+
+    for column in columnNames:
+        uniqueValues = set()
+        for entry in rawData[column].dropna().unique():
+            for value in entry.split("|"):
+                uniqueValues.add(value.strip())
+
+        uniqueValues = list(uniqueValues)  # Fixed order
+
+        cleanedData[column] = rawData[column].apply(
+            lambda x: np.eye(len(uniqueValues))[
+                (
+                    [uniqueValues.index(value.strip()) for value in x.split("|")]
+                    if not pandas.isna(x)
+                    else []
+                )
+            ].sum(axis=0)
+        )
+        del rawData[column]
+
+
 def cleanData() -> None:
     """
     Clean the mental health dataset and save the cleaned and remaining data.
@@ -224,6 +263,9 @@ def cleanData() -> None:
 
     # How many employees does your company or organization have?
     companySize(rawData, cleanedData)
+
+    # Columns with pipe-separated values
+    pipes(rawData, cleanedData)
 
     # Columns with easy/difficult values
     easy(rawData, cleanedData)
