@@ -1,10 +1,12 @@
+from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.decomposition import PCA
 import pandas as pd
 import numpy as np
 import json
 import os
 
 
-def calculateCorrelations(data: pd.DataFrame) -> dict:
+def calculateCorrelations(data: pd.DataFrame) -> pd.DataFrame:
     """
     This function calculates the correlation matrix of the given data.
 
@@ -14,13 +16,45 @@ def calculateCorrelations(data: pd.DataFrame) -> dict:
     Returns:
         - A dictionary with the correlation matrix
     """
+    heatmapDf = pd.DataFrame(np.nan, index=data.columns, columns=data.columns)
+
     # Iterate across all pairs of columns
     for i in range(len(data.columns)):
         for j in range(i + 1, len(data.columns)):
             col1 = data.columns[i]
             col2 = data.columns[j]
 
-            print(col1, col2)
+            # Change around so vectors col1 < col2
+            if len(data[col1][0]) > len(data[col2][0]):
+                col1, col2 = col2, col1
+
+            nCompo = len(data[col1][0])
+
+            pca = PCA(n_components=nCompo)
+            transformed = pca.fit_transform(
+                np.hstack(
+                    [
+                        np.vstack(data[col2].to_numpy()),
+                    ]
+                )
+            )
+
+            assert len(data[col1][0]) == len(transformed[0])
+
+            # Cosine similarity
+            score = (
+                cosine_similarity(np.vstack(data[col1]), transformed).flatten().mean()
+            )
+
+            # Symmetric matrix
+            heatmapDf.loc[col1, col2] = score
+            heatmapDf.loc[col2, col1] = score
+
+    # Fill diagonal with 1
+    for i in range(len(heatmapDf)):
+        heatmapDf.iloc[i, i] = 1
+
+    return heatmapDf
 
 
 def indexCorrelation() -> None:
