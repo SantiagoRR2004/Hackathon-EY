@@ -48,9 +48,19 @@ def binaryMissing(rawData: pandas.DataFrame, cleanedData: pandas.DataFrame) -> N
             del rawData[column]
 
 
-def yesNoMaybe(rawData: pandas.DataFrame, cleanedData: pandas.DataFrame) -> None:
+def basicOneHot(rawData: pandas.DataFrame, cleanedData: pandas.DataFrame) -> None:
     """
-    This function is used to clean columns with Yes/No/Maybe values.
+    This function is used to clean columns that are categorical without order.
+    If they have a missing value, it is another category.
+
+    We look for:
+        -  `Yes`/`No`
+        -  `Yes`/`No`/`Maybe`
+        -  `Yes`/`No`/`I don't know`
+        -  `Yes`/`No`/`I'm not sure`
+        -  `Yes`/`No`/`I am not sure`
+        -  `Yes`/`No`/`Unsure`/`Not applicable to me`
+        -  `Yes`/`No`/`I don't know`/`Not eligible for coverage / N/A`
 
     We one-hot encode them.
 
@@ -61,13 +71,26 @@ def yesNoMaybe(rawData: pandas.DataFrame, cleanedData: pandas.DataFrame) -> None
     Returns:
         - None
     """
+    validOneHot = [
+        {"Yes", "No"},
+        {"Yes", "No", "Maybe"},
+        {"Yes", "No", "I don't know"},
+        {"Yes", "No", "I'm not sure"},
+        {"Yes", "No", "I am not sure"},
+        {"Yes", "No", "Unsure", "Not applicable to me"},
+        {"Yes", "No", "I don't know", "Not eligible for coverage / N/A"},
+    ]
+
     for column in rawData.columns:
-        if not rawData[column].isnull().any() and set(
-            rawData[column].dropna().unique()
-        ).issubset({"Yes", "No", "Maybe"}):
-            categories = ["Yes", "No", "Maybe"]  # fixed order
+        hasMissing = int(rawData[column].isnull().any())
+        uniqueValues = set(rawData[column].dropna().unique())
+
+        if uniqueValues in validOneHot:
+            categories = list(uniqueValues)  # Fixed order
             cleanedData[column] = rawData[column].apply(
-                lambda x: np.eye(len(categories))[categories.index(x)]
+                lambda x: np.eye(len(uniqueValues) + hasMissing)[
+                    categories.index(x) if not pandas.isna(x) else -1
+                ]
             )
             del rawData[column]
 
@@ -149,7 +172,7 @@ def cleanData() -> None:
     binaryMissing(rawData, cleanedData)
 
     # Columns with only Yes/No/Maybe values
-    yesNoMaybe(rawData, cleanedData)
+    basicOneHot(rawData, cleanedData)
 
     # How many employees does your company or organization have?
     companySize(rawData, cleanedData)
