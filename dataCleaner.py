@@ -27,6 +27,27 @@ def binaryNoMissing(rawData: pandas.DataFrame, cleanedData: pandas.DataFrame) ->
             del rawData[column]
 
 
+def binaryMissing(rawData: pandas.DataFrame, cleanedData: pandas.DataFrame) -> None:
+    """
+    This function is used to clean binary columns with missing values.
+
+    This is one hot encoding them considering missing values as a category.
+
+    Args:
+        - rawData: The raw data
+        - cleanedData: The cleaned data
+
+    Returns:
+        - None
+    """
+    for column in rawData.columns:
+        if set(rawData[column].dropna().unique()).issubset({0, 1}):
+            cleanedData[column] = rawData[column].apply(
+                lambda x: np.eye(3)[2 if pandas.isna(x) else int(x)]
+            )
+            del rawData[column]
+
+
 def yesNoMaybe(rawData: pandas.DataFrame, cleanedData: pandas.DataFrame) -> None:
     """
     This function is used to clean columns with Yes/No/Maybe values.
@@ -123,6 +144,9 @@ def cleanData() -> None:
 
     # Find 0 and 1 columns with no missing values
     binaryNoMissing(rawData, cleanedData)
+
+    # Find 0 and 1 columns with missing values
+    binaryMissing(rawData, cleanedData)
 
     # Columns with only Yes/No/Maybe values
     yesNoMaybe(rawData, cleanedData)
