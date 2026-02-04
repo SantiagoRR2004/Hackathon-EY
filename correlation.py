@@ -125,7 +125,11 @@ def indexCorrelation() -> None:
             confusion_matrix=matrix.to_numpy(), display_labels=matrix.columns
         )
         disp.plot(values_format=".2f")
+        plt.xticks([])  # Removes x-axis labels
         plt.title(g)
+
+        plt.gcf().set_size_inches(30, 8)  # Increase figure size
+        plt.tight_layout()
 
         # Save the figure
         plt.savefig(os.path.join(dataFolder, f"{g.replace(' ', '')}.png"))
