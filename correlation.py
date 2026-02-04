@@ -1,5 +1,4 @@
 from sklearn.metrics.pairwise import cosine_similarity
-from sklearn.metrics import ConfusionMatrixDisplay
 from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -71,9 +70,9 @@ def calculateCorrelationsMatrix(data: pd.DataFrame) -> pd.DataFrame:
             heatmapDf.loc[col1, col2] = score
             heatmapDf.loc[col2, col1] = score
 
-    # Fill diagonal with 0
+    # Fill diagonal with NaN
     for i in range(len(heatmapDf)):
-        heatmapDf.iloc[i, i] = 0
+        heatmapDf.iloc[i, i] = np.nan
 
     return heatmapDf
 
@@ -121,18 +120,39 @@ def indexCorrelation() -> None:
             cleanData[[col for col in indexes[g] if col in cleanData.columns]]
         )
 
-        disp = ConfusionMatrixDisplay(
-            confusion_matrix=matrix.to_numpy(), display_labels=matrix.columns
-        )
-        disp.plot(values_format=".2f")
-        plt.xticks([])  # Removes x-axis labels
-        plt.title(g)
+        data = matrix.to_numpy()
+        labels = matrix.columns
 
-        plt.gcf().set_size_inches(30, 8)  # Increase figure size
-        plt.tight_layout()
+        fig, ax = plt.subplots()
+        im = ax.imshow(data)
+
+        # Add numbers inside the cells
+        for i in range(data.shape[0]):
+            for j in range(data.shape[1]):
+                if i != j:  # Don't add numbers on the diagonal
+                    ax.text(
+                        j,
+                        i,
+                        f"{data[i, j]:.2f}",
+                        ha="center",
+                        va="center",
+                        color="black",
+                    )
+
+        # Remove x-axis labels
+        ax.set_xticks([])
+        ax.set_yticks(np.arange(len(labels)))
+        ax.set_yticklabels(labels)
+
+        plt.title(g)
+        plt.colorbar(im)
 
         # Save the figure
-        plt.savefig(os.path.join(dataFolder, f"{g.replace(' ', '')}.png"))
+        plt.savefig(
+            os.path.join(dataFolder, f"{g.replace(' ', '')}.png"),
+            bbox_inches="tight",
+        )
+        plt.close()
 
 
 if __name__ == "__main__":
