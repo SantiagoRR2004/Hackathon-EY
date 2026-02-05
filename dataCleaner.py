@@ -60,6 +60,7 @@ def basicOneHot(rawData: pandas.DataFrame, cleanedData: pandas.DataFrame) -> Non
         -  `Yes`/`No`/`I'm not sure`
         -  `Yes`/`No`/`I am not sure`
         -  `Yes`/`No`/`Unsure`/`Not applicable to me`
+        -  `Yes`/`No`/`I'm not sure`/`Not applicable to me`
         -  `Yes`/`No`/`I don't know`/`Not eligible for coverage / N/A`
 
     We one-hot encode them.
@@ -78,6 +79,7 @@ def basicOneHot(rawData: pandas.DataFrame, cleanedData: pandas.DataFrame) -> Non
         {"Yes", "No", "I'm not sure"},
         {"Yes", "No", "I am not sure"},
         {"Yes", "No", "Unsure", "Not applicable to me"},
+        {"Yes", "No", "I'm not sure", "Not applicable to me"},
         {"Yes", "No", "I don't know", "Not eligible for coverage / N/A"},
     ]
 
@@ -162,7 +164,85 @@ def basicOrdinal(rawData: pandas.DataFrame, cleanedData: pandas.DataFrame) -> No
             "Somewhat difficult": 0.75,
             "Very difficult": 1,
             "I don't know": -1,
-        }
+        },
+        {
+            "No, I don't know any": 0,
+            "I know some": 0.5,
+            "Yes, I know several": 1,
+        },
+        {
+            "No, because it would impact me negatively": 0,
+            "Sometimes, if it comes up": 0.5,
+            "Yes, always": 1,
+            "No, because it doesn't matter": -1,
+            "Not applicable to me": -1,
+        },
+        {
+            "No, none did": 0,
+            "Some did": 0.5,
+            "Yes, they all did": 1,
+            "I don't know": -1,
+        },
+        {
+            "None did": 0,
+            "Some did": 0.5,
+            "Yes, they all did": 1,
+            "I don't know": -1,
+        },
+        {
+            "N/A (not currently aware)": 0,
+            "I was aware of some": 0.5,
+            "Yes, I was aware of all of them": 1,
+            "No, I only became aware later": -1,
+        },
+        {
+            "No": 0,
+            "Sometimes": 0.5,
+            "Yes, always": 1,
+            "I don't know": -1,
+        },
+        {
+            "None of them": 0,
+            "Some of them": 0.5,
+            "Yes, all of them": 1,
+        },
+        {
+            "None of them": 0,
+            "Some of them": 0.5,
+            "Yes, all of them": 1,
+            "I don't know": -1,
+        },
+        {
+            "None did": 0,
+            "Some did": 0.5,
+            "Yes, they all did": 1,
+        },
+        {
+            "No, at none of my previous employers": 0,
+            "Some of my previous employers": 0.5,
+            "Yes, at all of my previous employers": 1,
+        },
+        {
+            "No, at none of my previous employers": 0,
+            "Some of my previous employers": 0.5,
+            "Yes, at all of my previous employers": 1,
+            "I don't know": -1,
+        },
+        {
+            "Not open at all": 0,
+            "Somewhat not open": 0.25,
+            "Neutral": 0.5,
+            "Somewhat open": 0.75,
+            "Very open": 1,
+            "Not applicable to me (I do not have a mental illness)": -1,
+        },
+        {
+            "Never": 0,
+            "Rarely": 1 / 3,
+            "Sometimes": 2 / 3,
+            "Often": 1,
+            "Not applicable to me": -1,
+        },
     ]
 
     for column in rawData.columns:
