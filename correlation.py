@@ -1,5 +1,3 @@
-from sklearn.metrics.pairwise import cosine_similarity
-from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
@@ -11,8 +9,11 @@ def calculateCorrelation(col1: pd.Series, col2: pd.Series) -> float:
     """
     This function calculates the correlation between two columns.
 
-    Because some columns can be vectors, we use PCA to reduce the dimensionality
-    of the bigger vector to the smaller one, and then calculate the cosine similarity.
+    We use Procrustes similarity score. It can measure between
+    matrices of different dimensions.
+
+    The similarity score isn't actually called that, it is a
+    value that can be obtained from using Procrustes analysis.
 
     Args:
         - col1 (pd.Series): The first column
@@ -21,28 +22,22 @@ def calculateCorrelation(col1: pd.Series, col2: pd.Series) -> float:
     Returns:
         - (float): The correlation score between the two columns
     """
-    # Change around so vectors col1 < col2
-    if len(col1[0]) > len(col2[0]):
-        col1, col2 = col2, col1
+    # Stack into matrices
+    X = np.vstack([np.atleast_1d(x).astype(float) for x in col1])
+    Y = np.vstack([np.atleast_1d(y).astype(float) for y in col2])
 
-    nCompo = len(col1[0])
+    # Center the data
+    X -= X.mean(axis=0)
+    Y -= Y.mean(axis=0)
 
-    pca = PCA(n_components=nCompo)
-    transformed = pca.fit_transform(
-        np.hstack(
-            [
-                np.vstack(col2.to_numpy()),
-            ]
-        )
-    )
+    # SVD of cross-covariance
+    M = X.T @ Y
+    U, S, Sv = np.linalg.svd(M, full_matrices=False)
 
-    # Make sure the lengths match
-    assert len(col1[0]) == len(transformed[0])
+    # 5) Procrustes similarity score (best metric)
+    similarity = S.sum() / (np.linalg.norm(X, "fro") * np.linalg.norm(Y, "fro"))
 
-    # Cosine similarity
-    score = cosine_similarity(np.vstack(col1), transformed).flatten().mean()
-
-    return score
+    return similarity
 
 
 def calculateCorrelationsMatrix(data: pd.DataFrame) -> pd.DataFrame:
