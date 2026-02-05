@@ -118,8 +118,8 @@ def indexCorrelation() -> None:
         data = matrix.to_numpy()
         labels = matrix.columns
 
-        fig, ax = plt.subplots()
-        im = ax.imshow(data)
+        fig, ax = plt.subplots(figsize=(10, 10))
+        im = ax.imshow(data, aspect="equal")
 
         # Add numbers inside the cells
         for i in range(data.shape[0]):
