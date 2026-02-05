@@ -243,6 +243,11 @@ def basicOrdinal(rawData: pandas.DataFrame, cleanedData: pandas.DataFrame) -> No
             "Often": 1,
             "Not applicable to me": -1,
         },
+        {
+            "Never": 0,
+            "Sometimes": 0.5,
+            "Always": 1,
+        },
     ]
 
     for column in rawData.columns:
