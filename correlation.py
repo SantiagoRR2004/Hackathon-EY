@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
+import utils
 import json
 import os
 
@@ -86,18 +87,7 @@ def indexCorrelation() -> None:
     dataFolder = os.path.join(currentDirectory, "data")
 
     # Load the data
-    cleanData = pd.read_csv(os.path.join(dataFolder, "mental_healthCleaned.csv"))
-
-    # Fix vectors
-    for c in cleanData.columns:
-        if (
-            pd.api.types.is_string_dtype(cleanData[c])
-            and cleanData[c][0].startswith("[")
-            and cleanData[c][0].endswith("]")
-        ):
-            cleanData[c] = cleanData[c].apply(
-                lambda x: np.fromstring(x.strip("[]"), sep=" ")
-            )
+    cleanData = utils.loadCSV(os.path.join(dataFolder, "mental_healthCleaned.csv"))
 
     # Load the indexes
     with open(os.path.join(dataFolder, "indexes.json"), "r") as f:
