@@ -50,8 +50,8 @@ def graphCorrelationMatrix(matrix: pd.DataFrame, fileName: str) -> None:
     data = matrix.to_numpy()
     labels = matrix.columns
 
-    fig, ax = plt.subplots(figsize=(10, 10))
-    im = ax.imshow(data, aspect="equal")
+    fig, ax = plt.subplots(figsize=(len(labels), len(labels)))
+    im = ax.imshow(data, aspect="equal", cmap="coolwarm")
 
     # Add numbers inside the cells
     for i in range(data.shape[0]):
@@ -70,6 +70,7 @@ def graphCorrelationMatrix(matrix: pd.DataFrame, fileName: str) -> None:
     ax.set_xticks([])
     ax.set_yticks(np.arange(len(labels)))
     ax.set_yticklabels(labels)
+    ax.grid(False)
 
     plt.title(fileName)
     plt.colorbar(im)

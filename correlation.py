@@ -125,7 +125,7 @@ def plotTopCorrelatedQuestions(topPairs: dict, dataFolder: str) -> None:
         ax.tick_params(axis="y", labelsize=9)
 
         ax.set_title(
-            f"Top 5 Correlaciones: {indexName}", fontsize=15, pad=20, fontweight="bold"
+            f"Top 5 Correlations: {indexName}", fontsize=15, pad=20, fontweight="bold"
         )
         ax.set_xlim(0, max(scores) * 1.18)
         ax.invert_yaxis()
