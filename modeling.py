@@ -1,5 +1,5 @@
+from sklearn.model_selection import StratifiedKFold
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.model_selection import StratifiedKFold, KFold
 from sklearn.metrics import f1_score
 import pandas as pd
 import correlation
@@ -8,17 +8,17 @@ import utils
 import os
 
 
-def trainModel(X: pd.DataFrame, y: pd.Series) -> float:
+def trainModel(X: pd.DataFrame, y: pd.Series) -> None:
     """
-    This function trains a model using K-Fold Cross Validation (5 splits)
-    and returns the mean F1 score.
+    This function trains a model using Stratified K-Fold Cross Validation (5 splits)
+    and calculates the mean F1 score.
 
     Args:
-        - X: The features to train the model on
-        - y: The target variable to train the model on
+        - X (pd.DataFrame): The features to train the model on
+        - y (pd.Series): The target variable to train the model on
 
     Returns:
-        - float: The mean F1 score across all LOO iterations
+        - None
     """
     # If the y is a numpy array (one hot encoded),
     # convert it back to a single column
@@ -29,21 +29,18 @@ def trainModel(X: pd.DataFrame, y: pd.Series) -> float:
     XArray = X.values
     yArray = y.values
 
-    # Try to use StratifiedKFold; if any class has fewer samples than n_splits,
-    # fall back to regular KFold to avoid errors.
-    n_splits = 5
-    predictions = []
-    trueValues = []
-
-    classes, counts = np.unique(yArray, return_counts=True)
-    use_stratified = counts.min() >= n_splits
-
-    if use_stratified:
-        cv = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=42)
-        cv_name = "StratifiedKFold"
+    uniqueClasses = np.unique(yArray)
+    if len(uniqueClasses) == 2:
+        f1Method = "binary"
     else:
-        cv = KFold(n_splits=n_splits, shuffle=True, random_state=42)
-        cv_name = "KFold"
+        f1Method = "macro"
+
+    f1Scores = []
+    accuracies = []
+
+    # Use StratifiedKFold
+    cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+    cv_name = "StratifiedKFold"
 
     for trainIndex, testIndex in cv.split(XArray, yArray):
         XTrain, XTest = XArray[trainIndex], XArray[testIndex]
@@ -53,26 +50,16 @@ def trainModel(X: pd.DataFrame, y: pd.Series) -> float:
         model.fit(XTrain, yTrain)
 
         yPred = model.predict(XTest)
-        predictions.extend(yPred.tolist())
-        trueValues.extend(yTest.tolist())
+
+        f1Scores.append(f1_score(yTest, yPred, average=f1Method))
+        accuracies.append((yPred == yTest).sum() / len(yTest))
 
     # Calculate mean F1 score (macro for multiclass)
-    predictions = np.array(predictions)
-    trueValues = np.array(trueValues)
-
-    # Determine if binary or multiclass
-    uniqueClasses = np.unique(trueValues)
-    if len(uniqueClasses) == 2:
-        meanF1 = f1_score(
-            trueValues, predictions, average="binary", pos_label=uniqueClasses[1]
-        )
-    else:
-        meanF1 = f1_score(trueValues, predictions, average="macro")
+    meanF1 = np.mean(f1Scores)
+    meanAccuracy = np.mean(accuracies)
 
     print(f"{cv_name} (5) CV Mean F1 Score: {meanF1:.4f}")
-    print(f"Accuracy: {(predictions == trueValues).sum() / len(trueValues):.4f}")
-
-    return meanF1
+    print(f"Accuracy: {meanAccuracy:.4f}")
 
 
 def modeling() -> None:

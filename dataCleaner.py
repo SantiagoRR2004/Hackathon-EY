@@ -464,7 +464,7 @@ def cleanData() -> None:
     gender(rawData, cleanedData)
 
     # Free-form text columns
-    stringColumns(rawData, cleanedData)
+    # stringColumns(rawData, cleanedData)
 
     # Print the number of columns
     print(f"Number of cleaned columns: {cleanedData.shape[1]}")
