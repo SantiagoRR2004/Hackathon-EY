@@ -1,4 +1,6 @@
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.model_selection import LeaveOneOut
+from sklearn.metrics import f1_score
 import pandas as pd
 import correlation
 import numpy as np
@@ -6,34 +8,61 @@ import utils
 import os
 
 
-def trainModel(X: pd.DataFrame, y: pd.Series) -> None:
+def trainModel(X: pd.DataFrame, y: pd.Series) -> float:
     """
-    This function trains a model on the given data.
+    This function trains a model using Leave-One-Out Cross Validation
+    and returns the mean F1 score.
 
     Args:
         - X: The features to train the model on
         - y: The target variable to train the model on
 
     Returns:
-        - None
+        - float: The mean F1 score across all LOO iterations
     """
-    # If the y is a numpy, it is one hot encoded,
-    # so we need to convert it back to a single column
+    # If the y is a numpy array (one hot encoded),
+    # convert it back to a single column
     if isinstance(y.iloc[0], np.ndarray) and y.iloc[0].ndim == 1:
         y = y.apply(np.argmax)
 
-    # Divide 80-20 train-test split
-    splitIndex = int(0.8 * len(X))
-    XTrain, XTest = X[:splitIndex], X[splitIndex:]
-    yTrain, yTest = y[:splitIndex], y[splitIndex:]
+    # Convert to numpy for sklearn compatibility
+    XArray = X.values
+    yArray = y.values
 
-    model = DecisionTreeClassifier()
-    model.fit(XTrain, yTrain)
+    # Leave-One-Out Cross Validation
+    loo = LeaveOneOut()
+    predictions = []
+    trueValues = []
 
-    # Calculate F1 score
-    yPred = model.predict(XTest)
-    f1Score = (2 * (yTest == yPred).sum()) / (len(yTest) + len(yPred))
-    print(f"F1 Score: {f1Score}")
+    for trainIndex, testIndex in loo.split(XArray):
+        XTrain, XTest = XArray[trainIndex], XArray[testIndex]
+        yTrain, yTest = yArray[trainIndex], yArray[testIndex]
+
+        model = DecisionTreeClassifier(random_state=42)
+        model.fit(XTrain, yTrain)
+
+        yPred = model.predict(XTest)
+        predictions.append(yPred[0])
+        trueValues.append(yTest[0])
+
+    # Calculate mean F1 score (macro for multiclass)
+    predictions = np.array(predictions)
+    trueValues = np.array(trueValues)
+
+    # Determine if binary or multiclass
+    uniqueClasses = np.unique(trueValues)
+    if len(uniqueClasses) == 2:
+        meanF1 = f1_score(
+            trueValues, predictions, average="binary", pos_label=uniqueClasses[1]
+        )
+    else:
+        meanF1 = f1_score(trueValues, predictions, average="macro")
+
+    print(f"  Leave-One-Out CV Mean F1 Score: {meanF1:.4f}")
+    print(f"  Total samples: {len(y)}")
+    print(f"  Accuracy: {(predictions == trueValues).sum() / len(trueValues):.4f}")
+
+    return meanF1
 
 
 def modeling() -> None:
@@ -74,7 +103,9 @@ def modeling() -> None:
                 pd.DataFrame(correlations.pop(col).tolist()).add_prefix(f"{col}_")
             )
 
-        print(c)
+        print(f"\n{'='*80}")
+        print(f"Target: {c}")
+        print(f"{'='*80}")
         trainModel(correlations, cleanData[c])
 
 
