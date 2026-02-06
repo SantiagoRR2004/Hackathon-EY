@@ -76,7 +76,7 @@ def graphCorrelationMatrix(matrix: pd.DataFrame, fileName: str) -> None:
 
     # Save the figure
     plt.savefig(
-        os.path.join(dataFolder, f"{fileName.replace(' ', '')}.png"),
+        os.path.join(dataFolder, f"Correlation{fileName.replace(' ', '')}.png"),
         bbox_inches="tight",
     )
     plt.close()

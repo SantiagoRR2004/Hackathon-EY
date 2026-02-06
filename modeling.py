@@ -58,8 +58,8 @@ def trainModel(X: pd.DataFrame, y: pd.Series) -> float:
     else:
         meanF1 = f1_score(trueValues, predictions, average="macro")
 
-    print(f"  Leave-One-Out CV Mean F1 Score: {meanF1:.4f}")
-    print(f"  Accuracy: {(predictions == trueValues).sum() / len(trueValues):.4f}")
+    print(f"Leave-One-Out CV Mean F1 Score: {meanF1:.4f}")
+    print(f"Accuracy: {(predictions == trueValues).sum() / len(trueValues):.4f}")
 
     return meanF1
 

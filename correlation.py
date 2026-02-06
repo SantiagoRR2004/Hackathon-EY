@@ -225,7 +225,7 @@ def plotTopCorrelatedQuestions(topPairs: dict, dataFolder: str) -> None:
         plt.tight_layout()
 
         # Generate filename from index name
-        safeFilename = indexName.replace(" ", "_") + "_top5_correlations.png"
+        safeFilename = f"Top5{indexName.replace(' ', '')}.png"
 
         # Save the figure
         plt.savefig(
@@ -281,10 +281,12 @@ def indexCorrelation() -> None:
 
         # Print the top 5 correlations for this index
         utils.printSeparator(g)
+        printable = []
+
         for i, (q1, q2, score) in enumerate(topPairs, 1):
-            print(f"\n  {i}. Correlation: {score:.4f}")
-            print(f"     Q1: {q1}")
-            print(f"     Q2: {q2}")
+            printable.append(f"{i}. Correlation: {score:.4f}\n\tQ1: {q1}\n\tQ2: {q2}")
+
+        print("\n" + "\n\n".join(printable) + "\n")
 
         # Graph the correlation matrix for this index
         utils.graphCorrelationMatrix(matrix, g)
