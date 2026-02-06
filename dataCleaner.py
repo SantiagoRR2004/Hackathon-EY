@@ -122,15 +122,16 @@ def companySize(rawData: pandas.DataFrame, cleanedData: pandas.DataFrame) -> Non
         "More than 1000": math.log(1500),
         pandas.NA: -1,
     }
-    scaled = minMaxScaler.fit_transform(
-        rawData["How many employees does your company or organization have?"]
-        .map(sizeMapping)
-        .to_frame()
-    ).ravel()
+    mapped = rawData["How many employees does your company or organization have?"].map(
+        sizeMapping
+    )
+    scaled = minMaxScaler.fit_transform(mapped[mapped != -1].to_frame()).ravel()
+    scaledFull = pandas.Series(-1, index=mapped.index, dtype=float)
+    scaledFull[mapped != -1] = scaled.ravel()
     cleanedData["How many employees does your company or organization have?"] = [
         np.array([v, int(notna)])
         for v, notna in zip(
-            scaled,
+            scaledFull,
             rawData[
                 "How many employees does your company or organization have?"
             ].notna(),
@@ -247,6 +248,12 @@ def basicOrdinal(rawData: pandas.DataFrame, cleanedData: pandas.DataFrame) -> No
             "Never": 0,
             "Sometimes": 0.5,
             "Always": 1,
+        },
+        {
+            "1-25%": 0,
+            "26-50%": 1 / 3,
+            "51-75%": 2 / 3,
+            "76-100%": 1,
         },
     ]
 
@@ -466,6 +473,13 @@ def cleanData() -> None:
     assert (
         cleanedData.shape[1] + rawData.shape[1] == nColumns
     ), "Some columns were lost during cleaning."
+
+    # Load the original data
+    ogData = pandas.read_csv(os.path.join(dataFolder, "mental_health.csv"))
+
+    # Reorder the cleaned and raw data to match the original data
+    cleanedData = cleanedData[ogData.columns.intersection(cleanedData.columns)]
+    rawData = rawData[ogData.columns.intersection(rawData.columns)]
 
     # Save the cleaned data
     cleanedData.to_csv(
