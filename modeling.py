@@ -105,9 +105,7 @@ def modeling() -> None:
                 pd.DataFrame(correlations.pop(col).tolist()).add_prefix(f"{col}_")
             )
 
-        print(f"\n{'='*80}")
-        print(f"Target: {c}")
-        print(f"{'='*80}")
+        utils.printSeparator(c)
         trainModel(correlations, cleanData[c])
 
 

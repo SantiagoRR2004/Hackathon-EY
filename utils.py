@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
+import shutil
 import os
 
 
@@ -79,3 +80,29 @@ def graphCorrelationMatrix(matrix: pd.DataFrame, fileName: str) -> None:
         bbox_inches="tight",
     )
     plt.close()
+
+
+def printSeparator(text: str, sep: str = "=") -> None:
+    """
+    Print a separator line with centered text.
+
+    Args:
+        - text (str): The text to center in the separator.
+        - sep (str): The character to use for the separator line.
+
+    Returns:
+        - None
+    """
+    columns = shutil.get_terminal_size().columns
+
+    inner = f" {text.strip()} "
+    padding = (columns - len(inner)) // 2
+
+    line = sep * padding + inner + sep * padding
+
+    if len(line) < columns:
+        line += sep
+
+    print(sep * columns)
+    print(line)
+    print(sep * columns)

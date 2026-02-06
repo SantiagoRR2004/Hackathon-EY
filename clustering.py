@@ -45,6 +45,8 @@ def clustering() -> None:
             )
             centersDF.drop(columns=gcols, inplace=True)
 
+    utils.printSeparator("Clustering")
+
     # 5 most important features for each cluster
     for i in range(3):
         print(f"Cluster {i}:")

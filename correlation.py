@@ -280,10 +280,7 @@ def indexCorrelation() -> None:
         allTopPairs[g] = topPairs
 
         # Print the top 5 correlations for this index
-        print(f"\n{'='*80}")
-        print(f"{g}")
-        print(f"{'='*80}")
-        print("Top 5 question pairs with highest correlation:")
+        utils.printSeparator(g)
         for i, (q1, q2, score) in enumerate(topPairs, 1):
             print(f"\n  {i}. Correlation: {score:.4f}")
             print(f"     Q1: {q1}")
