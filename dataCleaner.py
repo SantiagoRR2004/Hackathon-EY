@@ -174,7 +174,7 @@ def basicOrdinal(rawData: pandas.DataFrame, cleanedData: pandas.DataFrame) -> No
             "No, because it would impact me negatively": 0,
             "Sometimes, if it comes up": 0.5,
             "Yes, always": 1,
-            "No, because it doesn't matter": -1,
+            "No, because it doesn't matter": -1,  # TODO
             "Not applicable to me": -1,
         },
         {
@@ -318,6 +318,95 @@ def pipes(rawData: pandas.DataFrame, cleanedData: pandas.DataFrame) -> None:
         del rawData[column]
 
 
+def gender(rawData: pandas.DataFrame, cleanedData: pandas.DataFrame) -> None:
+    """
+    This function is used to clean the gender column.
+        What is your gender?
+
+    TODO Expand the other category to divide the different types of
+    gender that are not male or female.
+
+    Args:
+        - rawData (pd.DataFrame): The raw data
+        - cleanedData (pd.DataFrame): The cleaned data
+
+    Returns:
+        - None
+    """
+    male = {
+        "male",
+        "m",
+        "man",
+        "m|",
+        "malr",
+        "male.",
+        "mail",
+        "cis man",
+        "dude",
+        "cisdude",
+        "male (cis)",
+        "cis male",
+        "sex is male",
+        "i'm a man why didn't you make this a drop down question. you should of asked sex? and i would of answered yes please. seriously how much text can this take?",
+    }
+    female = {
+        "female",
+        "f",
+        "fem",
+        "fm",
+        "female/woman",
+        "woman",
+        "cis-woman",
+        "cis female",
+        "cisgender female",
+        "female assigned at birth",
+        "i identify as female.",
+        "female-bodied; no feelings about gender",
+        "female (props for making this a freeform field, though)",
+    }
+
+    # # Uncomment to see the other values
+    # uniqueValues = set(
+    #     x.strip().lower() for x in rawData["What is your gender?"].dropna().unique()
+    # )
+    # print(uniqueValues.difference(set.union(male, female)))
+
+    binary = set.union(male, female)
+
+    cleanedData["What is your gender?"] = rawData["What is your gender?"].apply(
+        lambda x: np.array(
+            [
+                int(x.strip().lower() in male) if pandas.notna(x) else 0,
+                int(x.strip().lower() in female) if pandas.notna(x) else 0,
+                (int(x.strip().lower() not in binary) if pandas.notna(x) else 1),
+            ]
+        )
+    )
+    del rawData["What is your gender?"]
+
+
+def stringColumns(rawData: pandas.DataFrame, cleanedData: pandas.DataFrame) -> None:
+    """
+    This function is used to clean columns that are free-form text.
+
+    TODO For now we just use the length of the text.
+
+    Args:
+        - rawData: The raw data
+        - cleanedData: The cleaned data
+
+    Returns:
+        - None
+    """
+    stringColumns = ["Why or why not?", "Why or why not?.1"]
+
+    for column in stringColumns:
+        cleanedData[column] = rawData[column].apply(
+            lambda x: len(x) if pandas.notna(x) else 0
+        )
+        del rawData[column]
+
+
 def cleanData() -> None:
     """
     Clean the mental health dataset and save the cleaned and remaining data.
@@ -363,6 +452,12 @@ def cleanData() -> None:
 
     # Columns with basic ordinal values
     basicOrdinal(rawData, cleanedData)
+
+    # Gender column
+    gender(rawData, cleanedData)
+
+    # Free-form text columns
+    stringColumns(rawData, cleanedData)
 
     # Print the number of columns
     print(f"Number of cleaned columns: {cleanedData.shape[1]}")
