@@ -4,6 +4,7 @@ import numpy as np
 import utils
 import json
 import os
+import textwrap
 
 
 def calculateCorrelation(col1: pd.Series, col2: pd.Series) -> float:
@@ -103,125 +104,31 @@ def getTopCorrelatedPairs(matrix: pd.DataFrame, n: int = 5) -> list:
 
 
 def plotTopCorrelatedQuestions(topPairs: dict, dataFolder: str) -> None:
-    """
-    This function creates separate visualizations for each index showing
-    the top 5 correlated question pairs.
-
-    Args:
-        - topPairs (dict): Dictionary with index names as keys and list of top pairs as values
-        - dataFolder (str): Path to the data folder
-
-    Returns:
-        - None
-    """
-    import textwrap
-
-    # Professional color palette
-    colorPalettes = {
-        "Mental Health Support Index": [
-            "#1a5f4a",
-            "#238b6a",
-            "#2cb67d",
-            "#5dd9a3",
-            "#a8f0d4",
-        ],
-        "Workplace Stigma Index": [
-            "#1e3a5f",
-            "#2563a8",
-            "#3b82f6",
-            "#60a5fa",
-            "#93c5fd",
-        ],
-        "Organizational Openness Score": [
-            "#7c2d12",
-            "#b45309",
-            "#d97706",
-            "#f59e0b",
-            "#fbbf24",
-        ],
-    }
+    plt.style.use("ggplot")
 
     for indexName, pairs in topPairs.items():
-        # Set style
-        plt.style.use("seaborn-v0_8-whitegrid")
-
-        # Create individual figure for each index
-        fig, ax = plt.subplots(figsize=(16, 12))
-
-        colors = colorPalettes.get(
-            indexName, ["#4a5568", "#718096", "#a0aec0", "#cbd5e0", "#e2e8f0"]
-        )
-
-        # Prepare data with FULL text wrapped
         labels = []
-        scores = []
+        for q1, q2, _ in pairs:
+            q1_f = textwrap.fill(q1, width=50)
+            q2_f = textwrap.fill(q2, width=50)
+            labels.append(f"{q1_f}\n--- vs ---\n{q2_f}")
 
-        for i, (q1, q2, score) in enumerate(pairs):
-            # Wrap text to fit nicely (no truncation)
-            wrapWidth = 75
-            q1Wrapped = "\n".join(textwrap.wrap(q1, width=wrapWidth))
-            q2Wrapped = "\n".join(textwrap.wrap(q2, width=wrapWidth))
-            labels.append(f"{q1Wrapped}\n        vs\n{q2Wrapped}")
-            scores.append(score)
+        scores = [p[2] for p in pairs]
 
-        y_pos = np.arange(len(labels)) * 2.5  # More spacing between bars
+        fig, ax = plt.subplots(figsize=(12, 10))
 
-        # Create horizontal bar chart with gradient colors
-        bars = ax.barh(
-            y_pos,
-            scores,
-            color=colors,
-            edgecolor="white",
-            linewidth=2,
-            height=1.8,
-        )
+        colors = plt.cm.viridis(np.linspace(0.8, 0.4, len(scores)))
+        bars = ax.barh(labels, scores, color=colors, height=0.6)
 
-        # Add score labels inside or outside bars depending on space
-        for bar, score in zip(bars, scores):
-            textColor = "white" if score > 0.5 else "#333333"
-            xPos = bar.get_width() - 0.03 if score > 0.5 else bar.get_width() + 0.02
-            ha = "right" if score > 0.5 else "left"
+        ax.bar_label(bars, fmt="%.3f", padding=8, fontweight="bold", fontsize=11)
 
-            ax.text(
-                xPos,
-                bar.get_y() + bar.get_height() / 2,
-                f"{score:.3f}",
-                va="center",
-                ha=ha,
-                fontsize=14,
-                fontweight="bold",
-                color=textColor,
-            )
+        ax.tick_params(axis="y", labelsize=9)
 
-        # Styling
-        ax.set_yticks(y_pos)
-        ax.set_yticklabels(labels, fontsize=9, linespacing=1.15, fontfamily="monospace")
-        ax.invert_yaxis()
-        ax.set_xlabel("Procrustes Similarity Score", fontsize=12, fontweight="medium")
-        ax.set_xlim(0, 1.0)
-
-        # Remove spines for cleaner look
-        ax.spines["top"].set_visible(False)
-        ax.spines["right"].set_visible(False)
-        ax.spines["left"].set_visible(False)
-
-        # Add subtle grid
-        ax.xaxis.grid(True, linestyle="--", alpha=0.3)
-        ax.yaxis.grid(False)
-
-        # Title
         ax.set_title(
-            f"{indexName}\nTop 5 Question Pairs with Highest Correlation",
-            fontsize=16,
-            fontweight="bold",
-            pad=20,
-            color="#2d3748",
+            f"Top 5 Correlaciones: {indexName}", fontsize=15, pad=20, fontweight="bold"
         )
-
-        # Add tick styling
-        ax.tick_params(axis="y", length=0)
-        ax.tick_params(axis="x", colors="#666666")
-
+        ax.set_xlim(0, max(scores) * 1.18)
+        ax.invert_yaxis()
         plt.tight_layout()
 
         # Generate filename from index name
