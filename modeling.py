@@ -1,4 +1,6 @@
+from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import StratifiedKFold
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import f1_score
 import pandas as pd
@@ -35,31 +37,37 @@ def trainModel(X: pd.DataFrame, y: pd.Series) -> None:
     else:
         f1Method = "macro"
 
-    f1Scores = []
-    accuracies = []
+    models = {
+        LogisticRegression(random_state=42): {"name": "Logistic Regression"},
+        RandomForestClassifier(random_state=42): {"name": "Random Forest"},
+        DecisionTreeClassifier(random_state=42): {"name": "Decision Tree"},
+    }
 
-    # Use StratifiedKFold
-    cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
-    cv_name = "StratifiedKFold"
+    for model, modelInfo in models.items():
 
-    for trainIndex, testIndex in cv.split(XArray, yArray):
-        XTrain, XTest = XArray[trainIndex], XArray[testIndex]
-        yTrain, yTest = yArray[trainIndex], yArray[testIndex]
+        f1Scores = []
+        accuracies = []
 
-        model = DecisionTreeClassifier(random_state=42)
-        model.fit(XTrain, yTrain)
+        # Use StratifiedKFold
+        cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
 
-        yPred = model.predict(XTest)
+        for trainIndex, testIndex in cv.split(XArray, yArray):
+            XTrain, XTest = XArray[trainIndex], XArray[testIndex]
+            yTrain, yTest = yArray[trainIndex], yArray[testIndex]
 
-        f1Scores.append(f1_score(yTest, yPred, average=f1Method))
-        accuracies.append((yPred == yTest).sum() / len(yTest))
+            model.fit(XTrain, yTrain)
 
-    # Calculate mean F1 score (macro for multiclass)
-    meanF1 = np.mean(f1Scores)
-    meanAccuracy = np.mean(accuracies)
+            yPred = model.predict(XTest)
 
-    print(f"{cv_name} (5) CV Mean F1 Score: {meanF1:.4f}")
-    print(f"Accuracy: {meanAccuracy:.4f}")
+            f1Scores.append(f1_score(yTest, yPred, average=f1Method))
+            accuracies.append((yPred == yTest).sum() / len(yTest))
+
+        # Calculate mean F1 score (macro for multiclass)
+        meanF1 = np.mean(f1Scores)
+        meanAccuracy = np.mean(accuracies)
+
+        print(f"{modelInfo['name']} (5) CV Mean F1 Score: {meanF1:.4f}")
+        print(f"Accuracy: {meanAccuracy:.4f}")
 
 
 def modeling() -> None:
