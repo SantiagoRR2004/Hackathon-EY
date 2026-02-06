@@ -1,5 +1,5 @@
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.model_selection import LeaveOneOut
+from sklearn.model_selection import StratifiedKFold, KFold
 from sklearn.metrics import f1_score
 import pandas as pd
 import correlation
@@ -10,7 +10,7 @@ import os
 
 def trainModel(X: pd.DataFrame, y: pd.Series) -> float:
     """
-    This function trains a model using Leave-One-Out Cross Validation
+    This function trains a model using K-Fold Cross Validation (5 splits)
     and returns the mean F1 score.
 
     Args:
@@ -29,12 +29,23 @@ def trainModel(X: pd.DataFrame, y: pd.Series) -> float:
     XArray = X.values
     yArray = y.values
 
-    # Leave-One-Out Cross Validation
-    loo = LeaveOneOut()
+    # Try to use StratifiedKFold; if any class has fewer samples than n_splits,
+    # fall back to regular KFold to avoid errors.
+    n_splits = 5
     predictions = []
     trueValues = []
 
-    for trainIndex, testIndex in loo.split(XArray):
+    classes, counts = np.unique(yArray, return_counts=True)
+    use_stratified = counts.min() >= n_splits
+
+    if use_stratified:
+        cv = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=42)
+        cv_name = "StratifiedKFold"
+    else:
+        cv = KFold(n_splits=n_splits, shuffle=True, random_state=42)
+        cv_name = "KFold"
+
+    for trainIndex, testIndex in cv.split(XArray, yArray):
         XTrain, XTest = XArray[trainIndex], XArray[testIndex]
         yTrain, yTest = yArray[trainIndex], yArray[testIndex]
 
@@ -42,8 +53,8 @@ def trainModel(X: pd.DataFrame, y: pd.Series) -> float:
         model.fit(XTrain, yTrain)
 
         yPred = model.predict(XTest)
-        predictions.append(yPred[0])
-        trueValues.append(yTest[0])
+        predictions.extend(yPred.tolist())
+        trueValues.extend(yTest.tolist())
 
     # Calculate mean F1 score (macro for multiclass)
     predictions = np.array(predictions)
@@ -58,7 +69,7 @@ def trainModel(X: pd.DataFrame, y: pd.Series) -> float:
     else:
         meanF1 = f1_score(trueValues, predictions, average="macro")
 
-    print(f"Leave-One-Out CV Mean F1 Score: {meanF1:.4f}")
+    print(f"{cv_name} (5) CV Mean F1 Score: {meanF1:.4f}")
     print(f"Accuracy: {(predictions == trueValues).sum() / len(trueValues):.4f}")
 
     return meanF1
