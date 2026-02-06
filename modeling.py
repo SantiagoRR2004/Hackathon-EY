@@ -59,7 +59,6 @@ def trainModel(X: pd.DataFrame, y: pd.Series) -> float:
         meanF1 = f1_score(trueValues, predictions, average="macro")
 
     print(f"  Leave-One-Out CV Mean F1 Score: {meanF1:.4f}")
-    print(f"  Total samples: {len(y)}")
     print(f"  Accuracy: {(predictions == trueValues).sum() / len(trueValues):.4f}")
 
     return meanF1
@@ -85,6 +84,9 @@ def modeling() -> None:
 
     # Calculate the correlation matrix
     correlationMatrix = correlation.calculateCorrelationsMatrix(cleanData)
+
+    # Graph the entire correlation matrix
+    utils.graphCorrelationMatrix(correlationMatrix, "All")
 
     columns = [
         "Do you currently have a mental health disorder?",

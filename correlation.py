@@ -237,8 +237,6 @@ def plotTopCorrelatedQuestions(topPairs: dict, dataFolder: str) -> None:
         )
         plt.close()
 
-        print(f"Graph saved: {safeFilename}")
-
 
 def indexCorrelation() -> None:
     """
@@ -291,39 +289,8 @@ def indexCorrelation() -> None:
             print(f"     Q1: {q1}")
             print(f"     Q2: {q2}")
 
-        data = matrix.to_numpy()
-        labels = matrix.columns
-
-        fig, ax = plt.subplots(figsize=(10, 10))
-        im = ax.imshow(data, aspect="equal")
-
-        # Add numbers inside the cells
-        for i in range(data.shape[0]):
-            for j in range(data.shape[1]):
-                if i != j:  # Don't add numbers on the diagonal
-                    ax.text(
-                        j,
-                        i,
-                        f"{data[i, j]:.2f}",
-                        ha="center",
-                        va="center",
-                        color="black",
-                    )
-
-        # Remove x-axis labels
-        ax.set_xticks([])
-        ax.set_yticks(np.arange(len(labels)))
-        ax.set_yticklabels(labels)
-
-        plt.title(g)
-        plt.colorbar(im)
-
-        # Save the figure
-        plt.savefig(
-            os.path.join(dataFolder, f"{g.replace(' ', '')}.png"),
-            bbox_inches="tight",
-        )
-        plt.close()
+        # Graph the correlation matrix for this index
+        utils.graphCorrelationMatrix(matrix, g)
 
     # Generate the combined visualization for top 5 correlations by index
     plotTopCorrelatedQuestions(allTopPairs, dataFolder)
