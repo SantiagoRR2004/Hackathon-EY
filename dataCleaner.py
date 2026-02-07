@@ -1,4 +1,4 @@
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import MinMaxScaler, RobustScaler
 import numpy as np
 import pandas
 import math
@@ -468,6 +468,61 @@ def complexMapping(rawData: pandas.DataFrame, cleanedData: pandas.DataFrame) -> 
                 del rawData[column]
 
 
+def locations(rawData: pandas.DataFrame, cleanedData: pandas.DataFrame) -> None:
+    """
+    This function is used to clean the location column.
+
+    It is One-hot encoding.
+
+    Args:
+        - rawData (pandas.DataFrame): The raw data
+        - cleanedData (pandas.DataFrame): The cleaned data
+
+    Returns:
+        - None
+    """
+    columns = [
+        "What country do you live in?",
+        "What US state or territory do you live in?",
+        "What country do you work in?",
+        "What US state or territory do you work in?",
+    ]
+
+    for column in columns:
+        uniqueValues = set(rawData[column].dropna().unique())
+        hasMissing = int(rawData[column].isnull().any())
+        uniqueValues = list(uniqueValues)  # Fixed order
+
+        cleanedData[column] = rawData[column].apply(
+            lambda x: np.eye(len(uniqueValues) + hasMissing)[
+                uniqueValues.index(x) if not pandas.isna(x) else -1
+            ]
+        )
+        del rawData[column]
+
+
+def ages(rawData: pandas.DataFrame, cleanedData: pandas.DataFrame) -> None:
+    """
+    This function is used to clean the age column.
+
+    We just use Robust Scaling because there are no missing values.
+
+    Args:
+        - rawData (pandas.DataFrame): The raw data
+        - cleanedData (pandas.DataFrame): The cleaned data
+
+    Returns:
+        - None
+    """
+    column = "What is your age?"
+
+    scaler = RobustScaler()
+    cleanedData[column] = scaler.fit_transform(
+        rawData[column].dropna().to_frame()
+    ).ravel()
+    del rawData[column]
+
+
 def cleanData() -> None:
     """
     Clean the mental health dataset and save the cleaned and remaining data.
@@ -522,6 +577,12 @@ def cleanData() -> None:
 
     # Complex mapping columns
     complexMapping(rawData, cleanedData)
+
+    # Location columns
+    locations(rawData, cleanedData)
+
+    # Age column
+    ages(rawData, cleanedData)
 
     # Print the number of columns
     print(f"Number of cleaned columns: {cleanedData.shape[1]}")
