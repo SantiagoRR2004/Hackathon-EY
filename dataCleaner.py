@@ -81,6 +81,7 @@ def basicOneHot(rawData: pandas.DataFrame, cleanedData: pandas.DataFrame) -> Non
         {"Yes", "No", "Unsure", "Not applicable to me"},
         {"Yes", "No", "I'm not sure", "Not applicable to me"},
         {"Yes", "No", "I don't know", "Not eligible for coverage / N/A"},
+        {"Yes, I experienced", "Yes, I observed", "No", "Maybe/Not sure"},
     ]
 
     for column in rawData.columns:
@@ -170,13 +171,6 @@ def basicOrdinal(rawData: pandas.DataFrame, cleanedData: pandas.DataFrame) -> No
             "No, I don't know any": 0,
             "I know some": 0.5,
             "Yes, I know several": 1,
-        },
-        {
-            "No, because it would impact me negatively": 0,
-            "Sometimes, if it comes up": 0.5,
-            "Yes, always": 1,
-            "No, because it doesn't matter": -1,  # TODO
-            "Not applicable to me": -1,
         },
         {
             "No, none did": 0,
@@ -414,6 +408,66 @@ def stringColumns(rawData: pandas.DataFrame, cleanedData: pandas.DataFrame) -> N
         del rawData[column]
 
 
+def complexMapping(rawData: pandas.DataFrame, cleanedData: pandas.DataFrame) -> None:
+    """
+    This function is used to clean columns that require a more complex mapping
+    that aren't One-Hot encoding or basic ordinal mapping. They tend to have
+    multiple orders.
+
+    Args:
+        - rawData: The raw data
+        - cleanedData: The cleaned data
+
+    Returns:
+        - None
+    """
+    mappings = [
+        {  # yes, has, would, maybe
+            "Yes, it has": np.array([1, 1, 0, 0]),
+            "No, it has not": np.array([0, 1, 0, 0]),
+            "Yes, I think it would": np.array([1, 0, 1, 0]),
+            "No, I don't think it would": np.array([0, 0, 1, 0]),
+            "Maybe": np.array([0, 0, 0, 1]),
+        },
+        {
+            "Yes, always": np.array([1, 0, 0, 0]),
+            "Sometimes, if it comes up": np.array([0.5, 0, 0, 0]),
+            "No, because it would impact me negatively": np.array([0, 1, 0, 0]),
+            "No, because it doesn't matter": np.array([0, 0, 1, 0]),
+            "Not applicable to me": np.array([0, 0, 0, 1]),
+        },
+        {  # yes, do, would, maybe
+            "Yes, they do": np.array([1, 1, 0, 0]),
+            "No, they do not": np.array([0, 1, 0, 0]),
+            "Yes, I think they would": np.array([1, 0, 1, 0]),
+            "No, I don't think they would": np.array([0, 0, 1, 0]),
+            "Maybe": np.array([0, 0, 0, 1]),
+        },
+    ]
+
+    for column in rawData.columns:
+        uniqueValues = set(rawData[column].dropna().unique())
+        hasMissing = int(rawData[column].isnull().any())
+
+        for mapping in mappings:
+            if uniqueValues == set(mapping.keys()):
+
+                if hasMissing:
+                    newMapping = mapping.copy()
+                    for key in mapping.keys():
+                        newMapping[key] = np.concatenate([mapping[key], np.array([0])])
+
+                    missingVec = np.array([0] * (len(mapping[key]) + 1))
+
+                def mapValue(x):
+                    if pandas.isna(x):
+                        return missingVec
+                    return newMapping[x] if hasMissing else mapping[x]
+
+                cleanedData[column] = rawData[column].apply(lambda x: mapValue(x))
+                del rawData[column]
+
+
 def cleanData() -> None:
     """
     Clean the mental health dataset and save the cleaned and remaining data.
@@ -465,6 +519,9 @@ def cleanData() -> None:
 
     # Free-form text columns
     # stringColumns(rawData, cleanedData)
+
+    # Complex mapping columns
+    complexMapping(rawData, cleanedData)
 
     # Print the number of columns
     print(f"Number of cleaned columns: {cleanedData.shape[1]}")
