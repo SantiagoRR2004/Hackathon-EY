@@ -1,10 +1,10 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
+import textwrap
 import utils
 import json
 import os
-import textwrap
 
 
 def calculateCorrelation(col1: pd.Series, col2: pd.Series) -> float:
@@ -16,6 +16,18 @@ def calculateCorrelation(col1: pd.Series, col2: pd.Series) -> float:
 
     The similarity score isn't actually called that, it is a
     value that can be obtained from using Procrustes analysis.
+
+        1. We calculate the cross-covariance matrix between the two columns,
+            this is done by centering and doing the dot product of the two matrices.
+
+        2. We perform Singular Value Decomposition (SVD) on the cross-covariance.
+            We only use the singular values (S) from the SVD, which represent the strength of the correlation.
+
+        3. We sum the singular values and normalize by the product of the Frobenius norms of the original matrices.
+
+    The similarity score ranges from 0 to 1 and
+    permutations of the columns of either matrix do not change the score.
+    See ./testCorrelation.py for experimental proof.
 
     Args:
         - col1 (pd.Series): The first column
@@ -34,7 +46,7 @@ def calculateCorrelation(col1: pd.Series, col2: pd.Series) -> float:
 
     # SVD of cross-covariance
     M = X.T @ Y
-    U, S, Sv = np.linalg.svd(M, full_matrices=False)
+    U, S, V = np.linalg.svd(M, full_matrices=False)
 
     # 5) Procrustes similarity score (best metric)
     similarity = S.sum() / (np.linalg.norm(X, "fro") * np.linalg.norm(Y, "fro"))
