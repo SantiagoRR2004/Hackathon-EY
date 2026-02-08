@@ -1,14 +1,15 @@
 __pycache__
 .venv/
 
-# Open csv files
+# Open files
 *.csv#
 *.xlsx#
 
-# The cleaned data
+# The generated data
 mental_healthCleaned.csv
 mental_healthRemaining.csv
 centers.csv
+submission.json
 
 # Images
 *.png

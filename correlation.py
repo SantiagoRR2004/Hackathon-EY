@@ -157,7 +157,7 @@ def plotTopCorrelatedQuestions(topPairs: dict, dataFolder: str) -> None:
         plt.close()
 
 
-def indexCorrelation() -> None:
+def indexCorrelation() -> dict:
     """
     This function calculates the correlation matrices for each index
     and generates visualizations including the top 5 correlated question pairs.
@@ -166,7 +166,7 @@ def indexCorrelation() -> None:
         - None
 
     Returns:
-        - None
+        - dict: A dictionary containing the top 5 correlated pairs for each index
     """
     # Get the paths
     currentDirectory = os.path.dirname(os.path.abspath(__file__))
@@ -212,6 +212,8 @@ def indexCorrelation() -> None:
 
     # Generate the combined visualization for top 5 correlations by index
     plotTopCorrelatedQuestions(allTopPairs, dataFolder)
+
+    return allTopPairs
 
 
 if __name__ == "__main__":

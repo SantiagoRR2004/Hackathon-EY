@@ -10,7 +10,7 @@ import utils
 import os
 
 
-def trainModel(X: pd.DataFrame, y: pd.Series) -> None:
+def trainModel(X: pd.DataFrame, y: pd.Series) -> float:
     """
     This function trains a model using Stratified K-Fold Cross Validation (5 splits)
     and calculates the mean F1 score.
@@ -20,7 +20,7 @@ def trainModel(X: pd.DataFrame, y: pd.Series) -> None:
         - y (pd.Series): The target variable to train the model on
 
     Returns:
-        - None
+        - float: The F1 score of the best model
     """
     # If the y is a numpy array (one hot encoded),
     # convert it back to a single column
@@ -42,6 +42,8 @@ def trainModel(X: pd.DataFrame, y: pd.Series) -> None:
         RandomForestClassifier(random_state=42): {"name": "Random Forest"},
         DecisionTreeClassifier(random_state=42): {"name": "Decision Tree"},
     }
+
+    bestF1 = 0
 
     for model, modelInfo in models.items():
 
@@ -69,8 +71,13 @@ def trainModel(X: pd.DataFrame, y: pd.Series) -> None:
         print(f"{modelInfo['name']} (5) CV Mean F1 Score: {meanF1:.4f}")
         print(f"Accuracy: {meanAccuracy:.4f}")
 
+        if meanF1 > bestF1:
+            bestF1 = meanF1
 
-def modeling() -> None:
+    return bestF1
+
+
+def modeling() -> dict:
     """
     We get the 10 most correlated features with the target variable
     and train a model on those features.
@@ -79,7 +86,7 @@ def modeling() -> None:
         - None
 
     Returns:
-        - None
+        - dict: A dictionary containing the features and F1 scores for each target variable
     """
     # Get the paths
     currentDirectory = os.path.dirname(os.path.abspath(__file__))
@@ -98,12 +105,12 @@ def modeling() -> None:
         "Do you currently have a mental health disorder?",
         "Have you ever sought treatment for a mental health issue from a mental health professional?",
     ]
+    modelsData = {}
 
     for c in columns:
         # Get the biggest 10 correlations with the target column
-        correlations = cleanData[
-            correlationMatrix[c].sort_values(ascending=False)[:10].index
-        ]
+        features = correlationMatrix[c].sort_values(ascending=False)[:10].index
+        correlations = cleanData[features]
 
         # Divide columns that are vectors into their components
         for col in correlations.columns:
@@ -112,7 +119,14 @@ def modeling() -> None:
             )
 
         utils.printSeparator(c)
-        trainModel(correlations, cleanData[c])
+        f1Score = trainModel(correlations, cleanData[c])
+
+        modelsData[c] = {
+            "Features": features.tolist(),
+            "F1Score": f1Score,
+        }
+
+    return modelsData
 
 
 if __name__ == "__main__":

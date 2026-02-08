@@ -5,14 +5,14 @@ import utils
 import os
 
 
-def clustering() -> None:
+def clustering() -> list:
     """
 
     Args:
         - None
 
     Returns:
-        - None
+        - list: A list of lists of the top 3 features for each cluster
     """
     # Get the paths
     currentDirectory = os.path.dirname(os.path.abspath(__file__))
@@ -47,6 +47,8 @@ def clustering() -> None:
 
     utils.printSeparator("Clustering")
 
+    clusters = []
+
     # 5 most important features for each cluster
     for i in range(3):
         print(f"Cluster {i}:")
@@ -60,8 +62,12 @@ def clustering() -> None:
         for t in topFeatures.to_list():
             print(f"\t{t}")
 
+        clusters.append(topFeatures.to_list())
+
     # Save the centers to a CSV file
     centersDF.to_csv(os.path.join(dataFolder, "centers.csv"), index=False)
+
+    return clusters
 
 
 if __name__ == "__main__":
