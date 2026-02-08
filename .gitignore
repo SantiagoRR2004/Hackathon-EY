@@ -13,3 +13,8 @@ submission.json
 
 # Images
 *.png
+
+# The submissions
+submission.json
+docs/*.xlsx
+!docs/submission_output_template.xlsx
