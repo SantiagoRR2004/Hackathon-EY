@@ -405,6 +405,11 @@ def stringColumns(rawData: pandas.DataFrame, cleanedData: pandas.DataFrame) -> N
         cleanedData[column] = rawData[column].apply(
             lambda x: len(x) if pandas.notna(x) else 0
         )
+
+        maxLength = cleanedData[column].max()
+        if maxLength > 0:
+            cleanedData[column] = cleanedData[column] / maxLength
+
         del rawData[column]
 
 
@@ -572,9 +577,6 @@ def cleanData() -> None:
     # Gender column
     gender(rawData, cleanedData)
 
-    # Free-form text columns
-    # stringColumns(rawData, cleanedData)
-
     # Complex mapping columns
     complexMapping(rawData, cleanedData)
 
@@ -583,6 +585,9 @@ def cleanData() -> None:
 
     # Age column
     ages(rawData, cleanedData)
+
+    # Free-form text columns
+    stringColumns(rawData, cleanedData)
 
     # Print the number of columns
     print(f"Number of cleaned columns: {cleanedData.shape[1]}")
