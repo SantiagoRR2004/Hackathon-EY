@@ -1,3 +1,4 @@
+from sklearn.metrics import silhouette_samples
 from sklearn.cluster import KMeans
 import pandas as pd
 import numpy as np
@@ -5,8 +6,31 @@ import utils
 import os
 
 
+def bestClusteringModel(data: pd.DataFrame) -> pd.DataFrame:
+    """
+    Finds the best clustering model. It returns the same
+    data with a new column "Cluster".
+
+    Args:
+        - data (pd.DataFrame): The data to cluster
+
+    Returns:
+        - pd.DataFrame: The data with a new column "Cluster"
+    """
+    kmeans = KMeans(n_clusters=3, random_state=42)
+    kmeans.fit(data)
+
+    data["Cluster"] = kmeans.labels_
+
+    return data
+
+
 def clustering() -> list:
     """
+    Create 3 clusters of the data and return the top 3 features for each cluster.
+
+    These features are found by calculating the silhouette score
+    for each of them and taking the top 3 for each cluster.
 
     Args:
         - None
@@ -27,45 +51,51 @@ def clustering() -> list:
             pd.DataFrame(cleanData.pop(col).tolist()).add_prefix(f"{col}_")
         )
 
-    kmeans = KMeans(n_clusters=3, random_state=42)
-    kmeans.fit(cleanData)
+    cleanData = bestClusteringModel(cleanData)
 
-    centersDF = pd.DataFrame(kmeans.cluster_centers_, columns=cleanData.columns)
-
-    # Group the centers
-    for col in centersDF.columns.to_list():
+    # Group the rows
+    for col in cleanData.columns.to_list():
         # Group the centers by the original column name
         originalCol = col.split("_")[0]
 
-        if originalCol not in centersDF.columns:
-            gcols = [c for c in centersDF.columns if c.startswith(originalCol + "_")]
+        if originalCol not in cleanData.columns:
+            gcols = [c for c in cleanData.columns if c.startswith(originalCol + "_")]
 
-            centersDF[originalCol] = centersDF[gcols].apply(
+            cleanData[originalCol] = cleanData[gcols].apply(
                 lambda x: np.array(x), axis=1
             )
-            centersDF.drop(columns=gcols, inplace=True)
+            cleanData.drop(columns=gcols, inplace=True)
 
     utils.printSeparator("Clustering")
+
+    silhouette = pd.DataFrame()
+
+    for col in cleanData.columns:
+        if col != "Cluster":
+            silhouette[col] = silhouette_samples(
+                np.vstack(cleanData[col].values), cleanData["Cluster"]
+            )
+        else:
+            silhouette[col] = cleanData[col]
 
     clusters = []
 
     # 5 most important features for each cluster
     for i in range(3):
         print(f"Cluster {i}:")
-        clusterCenter = centersDF.iloc[i]
+        topFeatures = {}
 
-        # Do the magnitude of each feature and get the top 3
-        topFeatures = (
-            clusterCenter.apply(np.linalg.norm).sort_values(ascending=False)[:3].index
-        )
+        for col in silhouette.columns:
+            if col not in ["Cluster"]:
+                topFeatures[col] = silhouette[col][silhouette["Cluster"] == i].mean()
 
-        for t in topFeatures.to_list():
-            print(f"\t{t}")
+        # Sort the features by silhouette score
+        topFeatures = sorted(topFeatures.items(), key=lambda x: x[1], reverse=True)
 
-        clusters.append(topFeatures.to_list())
+        for feature, score in topFeatures[:3]:
+            print(f"\t{feature}")
 
-    # Save the centers to a CSV file
-    centersDF.to_csv(os.path.join(dataFolder, "centers.csv"), index=False)
+        clusters.append([feature for feature, score in topFeatures[:3]])
 
     return clusters
 
