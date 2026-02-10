@@ -115,17 +115,36 @@ def getTopCorrelatedPairs(matrix: pd.DataFrame, n: int = 5) -> list:
     return pairs[:n]
 
 
-def plotTopCorrelatedQuestions(topPairs: dict, dataFolder: str) -> None:
+def plotTopCorrelatedQuestions(
+    topPairs: dict, dataFolder: str, title: str = None, versus: bool = True
+) -> None:
+    """
+    Plot top correlated questions as horizontal bar charts.
+
+    Args:
+        - topPairs: dict mapping index names to lists of tuples.
+            If versus is True, tuples are (q1, q2, score).
+            If versus is False, tuples are (q, score).
+        - dataFolder: path to save the generated images.
+        - title: custom title for the chart. If None, a default title is generated.
+        - versus: if True, labels show "q1 vs q2". If False, labels show a single question.
+    """
     plt.style.use("ggplot")
 
     for indexName, pairs in topPairs.items():
         labels = []
-        for q1, q2, _ in pairs:
-            q1_f = textwrap.fill(q1, width=50)
-            q2_f = textwrap.fill(q2, width=50)
-            labels.append(f"{q1_f}\n--- vs ---\n{q2_f}")
+        scores = []
 
-        scores = [p[2] for p in pairs]
+        for i, entry in enumerate(pairs, 1):
+            if versus:
+                q1, q2, score = entry
+                q1_f = textwrap.fill(q1, width=50)
+                q2_f = textwrap.fill(q2, width=50)
+                labels.append(f"{i}. {q1_f}\n--- vs ---\n{q2_f}")
+            else:
+                q, score = entry
+                labels.append(f"{i}. {textwrap.fill(q, width=50)}")
+            scores.append(score)
 
         fig, ax = plt.subplots(figsize=(12, 10))
 
@@ -136,9 +155,8 @@ def plotTopCorrelatedQuestions(topPairs: dict, dataFolder: str) -> None:
 
         ax.tick_params(axis="y", labelsize=9)
 
-        ax.set_title(
-            f"Top 5 Correlations: {indexName}", fontsize=15, pad=20, fontweight="bold"
-        )
+        chartTitle = title if title is not None else f"Top 5 Correlations: {indexName}"
+        ax.set_title(chartTitle, fontsize=15, pad=20, fontweight="bold")
         ax.set_xlim(0, max(scores) * 1.18)
         ax.invert_yaxis()
         plt.tight_layout()
