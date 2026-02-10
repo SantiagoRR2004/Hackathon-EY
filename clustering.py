@@ -1,4 +1,6 @@
-from sklearn.metrics import silhouette_samples
+from sklearn.metrics import silhouette_samples, davies_bouldin_score
+from sklearn.decomposition import PCA
+from sklearn.pipeline import Pipeline
 from sklearn.cluster import KMeans
 import pandas as pd
 import numpy as np
@@ -17,10 +19,40 @@ def bestClusteringModel(data: pd.DataFrame) -> pd.DataFrame:
     Returns:
         - pd.DataFrame: The data with a new column "Cluster"
     """
-    kmeans = KMeans(n_clusters=3, random_state=42)
-    kmeans.fit(data)
+    models = {
+        Pipeline(steps=[("cluster", KMeans(n_clusters=3, random_state=42))]): {
+            "name": "KMeans"
+        },
+        Pipeline(
+            steps=[
+                ("pca", PCA(n_components=5, random_state=42)),
+                ("cluster", KMeans(n_clusters=3, random_state=42)),
+            ]
+        ): {"name": "KMeans + 5D PCA"},
+    }
 
-    data["Cluster"] = kmeans.labels_
+    bestScore = float("inf")
+    bestLabels = None
+
+    for model, modelInfo in models.items():
+
+        # Fit the model and get the labels
+        model.fit(data)
+        labels = model.named_steps["cluster"].labels_
+
+        assert len(np.unique(labels)) == 3, "The model did not create 3 clusters"
+
+        score = davies_bouldin_score(data, labels)
+
+        print(f"{modelInfo['name']} score: {score:.4f}")
+
+        # Update the best
+        if score < bestScore:
+            bestScore = score
+            bestLabels = labels
+
+    # Add the best labels to the data
+    data["Cluster"] = bestLabels
 
     return data
 
@@ -51,6 +83,8 @@ def clustering() -> list:
             pd.DataFrame(cleanData.pop(col).tolist()).add_prefix(f"{col}_")
         )
 
+    utils.printSeparator("Clustering")
+
     cleanData = bestClusteringModel(cleanData)
 
     # Group the rows
@@ -66,7 +100,7 @@ def clustering() -> list:
             )
             cleanData.drop(columns=gcols, inplace=True)
 
-    utils.printSeparator("Clustering")
+    utils.printSeparator("Clusters")
 
     silhouette = pd.DataFrame()
 
