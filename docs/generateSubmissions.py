@@ -1,5 +1,5 @@
-from openpyxl import Workbook
 import json
+import csv
 import os
 
 if __name__ == "__main__":
@@ -12,16 +12,13 @@ if __name__ == "__main__":
         with open(os.path.join(currentDirectory, f), "r") as file:
             data = json.load(file)
 
-        # Create a new workbook and select the active worksheet
-        workbook = Workbook()
-        sheet = workbook.active
-
-        # Header
-        sheet.append(list(data["data"].keys()))
-
-        # Row
-        sheet.append(list(data["data"].values()))
-
-        # Save the workbook with a name based on the original JSON file
-        excelFileName = f.replace(".json", ".xlsx")
-        workbook.save(os.path.join(currentDirectory, excelFileName))
+        csvFileName = f.replace(".json", ".csv")
+        with open(
+            os.path.join(currentDirectory, csvFileName),
+            "w",
+            newline="",
+            encoding="utf-8",
+        ) as csvfile:
+            writer = csv.writer(csvfile, delimiter=";")
+            writer.writerow(data["data"].keys())
+            writer.writerow(data["data"].values())

@@ -2,4 +2,3 @@ black
 pandas
 scikit-learn
 matplotlib
-openpyxl

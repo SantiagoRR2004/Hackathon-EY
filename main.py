@@ -65,19 +65,20 @@ if __name__ == "__main__":
         ] = feature
 
     finalAnswer["Do you currently have a mental health disorder? f1 score"] = (
-        modelsData["Do you currently have a mental health disorder?"]["F1Score"]
+        f"{modelsData["Do you currently have a mental health disorder?"]["F1Score"]:.4f}"
     )
     finalAnswer[
         "Have you ever sought treatment for a mental health issue from a mental health professional? f1 score"
-    ] = modelsData[
-        "Have you ever sought treatment for a mental health issue from a mental health professional?"
-    ][
-        "F1Score"
-    ]
+    ] = f"{
+        modelsData[
+            "Have you ever sought treatment for a mental health issue from a mental health professional?"
+        ][
+            "F1Score"
+        ]:.4f}"
 
     for i, cluster in enumerate(clusters):
         for j, feature in enumerate(cluster):
-            finalAnswer[f"Cluster {i} {j+1}"] = feature
+            finalAnswer[f"cluster {i} {j+1}"] = feature
 
     # Save the final answer to a JSON file
     with open("submission.json", "w", encoding="utf-8") as f:
