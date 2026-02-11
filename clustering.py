@@ -1,7 +1,7 @@
 from sklearn.metrics import silhouette_samples, davies_bouldin_score
+from sklearn.cluster import KMeans, AgglomerativeClustering
 from sklearn.decomposition import PCA
 from sklearn.pipeline import Pipeline
-from sklearn.cluster import KMeans
 import pandas as pd
 import numpy as np
 import utils
@@ -29,6 +29,15 @@ def bestClusteringModel(data: pd.DataFrame) -> pd.DataFrame:
                 ("cluster", KMeans(n_clusters=3, random_state=42)),
             ]
         ): {"name": "KMeans + 5D PCA"},
+        Pipeline(steps=[("cluster", AgglomerativeClustering(n_clusters=3))]): {
+            "name": "Agglomerative Clustering"
+        },
+        Pipeline(
+            steps=[
+                ("pca", PCA(n_components=0.9, random_state=42)),
+                ("cluster", AgglomerativeClustering(n_clusters=3)),
+            ]
+        ): {"name": "Agglomerative Clustering + 90% PCA"},
     }
 
     bestScore = float("inf")
