@@ -1,8 +1,13 @@
 from sklearn.preprocessing import MinMaxScaler, RobustScaler
+from sklearn.decomposition import PCA
+from sentence_transformers import SentenceTransformer
 import numpy as np
 import pandas
 import math
 import os
+
+# Global model for semantic text processing
+ST_MODEL = SentenceTransformer("all-MiniLM-L6-v2")
 
 
 def binaryNoMissing(rawData: pandas.DataFrame, cleanedData: pandas.DataFrame) -> None:
@@ -84,7 +89,7 @@ def basicOneHot(rawData: pandas.DataFrame, cleanedData: pandas.DataFrame) -> Non
         {"Yes, I experienced", "Yes, I observed", "No", "Maybe/Not sure"},
     ]
 
-    for column in rawData.columns:
+    for column in rawData.columns.to_list():
         hasMissing = int(rawData[column].isnull().any())
         uniqueValues = set(rawData[column].dropna().unique())
 
@@ -402,14 +407,10 @@ def stringColumns(rawData: pandas.DataFrame, cleanedData: pandas.DataFrame) -> N
     stringColumns = ["Why or why not?", "Why or why not?.1"]
 
     for column in stringColumns:
-        cleanedData[column] = rawData[column].apply(
-            lambda x: len(x) if pandas.notna(x) else 0
-        )
-
-        maxLength = cleanedData[column].max()
-        if maxLength > 0:
-            cleanedData[column] = cleanedData[column] / maxLength
-
+        texts = rawData[column].fillna("").astype(str).tolist()
+        embeddings = ST_MODEL.encode(texts)
+        pca = PCA(n_components=min(5, len(texts)))
+        cleanedData[column] = list(pca.fit_transform(embeddings))
         del rawData[column]
 
 
