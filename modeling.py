@@ -109,8 +109,14 @@ def modeling() -> dict:
 
     for c in columns:
         # Get the biggest 10 correlations with the target column
-        features = correlationMatrix[c].sort_values(ascending=False)[:10].index
-        correlations = cleanData[features]
+        features = correlationMatrix[c].sort_values(ascending=False)[:10]
+
+        # Show top ten features
+        utils.plotTopCorrelatedQuestions(
+            list(features.items()), dataFolder, title=c, versus=False
+        )
+
+        correlations = cleanData[features.index]
 
         # Divide columns that are vectors into their components
         for col in correlations.columns:

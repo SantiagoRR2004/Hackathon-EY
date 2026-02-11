@@ -1,7 +1,5 @@
-import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
-import textwrap
 import utils
 import json
 import os
@@ -115,66 +113,6 @@ def getTopCorrelatedPairs(matrix: pd.DataFrame, n: int = 5) -> list:
     return pairs[:n]
 
 
-def plotTopCorrelatedQuestions(
-    topPairs: dict, dataFolder: str, title: str = None, versus: bool = True
-) -> None:
-    """
-    Plot top correlated questions as horizontal bar charts.
-
-    Args:
-        - topPairs: dict mapping index names to lists of tuples.
-            If versus is True, tuples are (q1, q2, score).
-            If versus is False, tuples are (q, score).
-        - dataFolder: path to save the generated images.
-        - title: custom title for the chart. If None, a default title is generated.
-        - versus: if True, labels show "q1 vs q2". If False, labels show a single question.
-    """
-    plt.style.use("ggplot")
-
-    for indexName, pairs in topPairs.items():
-        labels = []
-        scores = []
-
-        for i, entry in enumerate(pairs, 1):
-            if versus:
-                q1, q2, score = entry
-                q1_f = textwrap.fill(q1, width=50)
-                q2_f = textwrap.fill(q2, width=50)
-                labels.append(f"{i}. {q1_f}\n--- vs ---\n{q2_f}")
-            else:
-                q, score = entry
-                labels.append(f"{i}. {textwrap.fill(q, width=50)}")
-            scores.append(score)
-
-        fig, ax = plt.subplots(figsize=(12, 10))
-
-        colors = plt.cm.viridis(np.linspace(0.8, 0.4, len(scores)))
-        bars = ax.barh(labels, scores, color=colors, height=0.6)
-
-        ax.bar_label(bars, fmt="%.3f", padding=8, fontweight="bold", fontsize=11)
-
-        ax.tick_params(axis="y", labelsize=9)
-
-        chartTitle = title if title is not None else f"Top 5 Correlations: {indexName}"
-        ax.set_title(chartTitle, fontsize=15, pad=20, fontweight="bold")
-        ax.set_xlim(0, max(scores) * 1.18)
-        ax.invert_yaxis()
-        plt.tight_layout()
-
-        # Generate filename from index name
-        safeFilename = f"Top5{indexName.replace(' ', '')}.png"
-
-        # Save the figure
-        plt.savefig(
-            os.path.join(dataFolder, safeFilename),
-            bbox_inches="tight",
-            dpi=150,
-            facecolor="white",
-            edgecolor="none",
-        )
-        plt.close()
-
-
 def indexCorrelation() -> dict:
     """
     This function calculates the correlation matrices for each index
@@ -228,8 +166,8 @@ def indexCorrelation() -> dict:
         # Graph the correlation matrix for this index
         utils.graphCorrelationMatrix(matrix, g)
 
-    # Generate the combined visualization for top 5 correlations by index
-    plotTopCorrelatedQuestions(allTopPairs, dataFolder)
+        # Generate the visualization for top 5 correlations by index
+        utils.plotTopCorrelatedQuestions(topPairs, dataFolder, title=g, versus=True)
 
     return allTopPairs
 

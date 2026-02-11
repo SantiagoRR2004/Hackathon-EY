@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
+import textwrap
 import shutil
 import os
 
@@ -107,3 +108,66 @@ def printSeparator(text: str, sep: str = "=") -> None:
     print(sep * columns)
     print(line)
     print(sep * columns)
+
+
+def plotTopCorrelatedQuestions(
+    topPairs: list, dataFolder: str, title: str, versus: bool = True
+) -> None:
+    """
+    Plot top correlated questions as horizontal bar charts.
+
+    Args:
+        - topPairs (list): dict mapping index names to lists of tuples.
+            If versus is True, tuples are (q1, q2, score).
+            If versus is False, tuples are (q, score).
+        - dataFolder (str): Path to save the generated images.
+        - title (str): Custom title for the chart.
+        - versus (bool): If True, labels show "q1 vs q2". If False, labels show a single question.
+
+    Returns:
+        - None
+    """
+    plt.style.use("ggplot")
+
+    labels = []
+    scores = []
+
+    for i, entry in enumerate(topPairs, 1):
+        if versus:
+            q1, q2, score = entry
+            q1_f = textwrap.fill(q1, width=50)
+            q2_f = textwrap.fill(q2, width=50)
+            labels.append(f"{i}. {q1_f}\n--- vs ---\n{q2_f}")
+        else:
+            q, score = entry
+            labels.append(f"{i}. {textwrap.fill(q, width=50)}")
+        scores.append(score)
+
+    fig, ax = plt.subplots(figsize=(12, 10))
+    ax.grid(False)
+
+    bars = ax.barh(labels, scores, color=plt.cm.coolwarm(scores), height=0.6)
+
+    ax.bar_label(bars, fmt="%.3f", padding=8, fontweight="bold", fontsize=11)
+
+    ax.tick_params(axis="y", labelsize=9)
+
+    chartTitle = f"Top {len(topPairs)} Correlations: {title}"
+    ax.set_title(chartTitle, fontsize=15, pad=20, fontweight="bold")
+    ax.set_xlim(0, max(scores) * 1.18)
+    ax.invert_yaxis()
+    ax.set_xticks([])
+    plt.tight_layout()
+
+    # Generate filename from index name
+    safeFilename = f"Top{len(topPairs)}{title.replace(' ', '')}.png"
+
+    # Save the figure
+    plt.savefig(
+        os.path.join(dataFolder, safeFilename),
+        bbox_inches="tight",
+        dpi=150,
+        facecolor="white",
+        edgecolor="none",
+    )
+    plt.close()

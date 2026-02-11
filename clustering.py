@@ -126,6 +126,14 @@ def clustering() -> list:
         # Sort the features by silhouette score
         topFeatures = sorted(topFeatures.items(), key=lambda x: x[1], reverse=True)
 
+        # Graph the top 5 features for this cluster
+        utils.plotTopCorrelatedQuestions(
+            topFeatures[:5],
+            dataFolder,
+            title=f"Cluster {i} Silhouette Scores",
+            versus=False,
+        )
+
         for feature, score in topFeatures[:3]:
             print(f"\t{feature}")
 
