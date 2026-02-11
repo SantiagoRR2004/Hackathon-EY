@@ -1,8 +1,11 @@
-from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import LogisticRegression, Perceptron
 from sklearn.model_selection import StratifiedKFold
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.naive_bayes import GaussianNB
 from sklearn.metrics import f1_score
+from sklearn.svm import SVC
 import pandas as pd
 import correlation
 import numpy as np
@@ -41,6 +44,10 @@ def trainModel(X: pd.DataFrame, y: pd.Series) -> float:
         LogisticRegression(random_state=42): {"name": "Logistic Regression"},
         RandomForestClassifier(random_state=42): {"name": "Random Forest"},
         DecisionTreeClassifier(random_state=42): {"name": "Decision Tree"},
+        Perceptron(random_state=42): {"name": "Perceptron"},
+        KNeighborsClassifier(): {"name": "K-Nearest Neighbors"},
+        GaussianNB(): {"name": "Gaussian Naive Bayes"},
+        SVC(random_state=42): {"name": "Support Vector Machine"},
     }
 
     bestF1 = 0
