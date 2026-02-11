@@ -1,13 +1,13 @@
 from sklearn.preprocessing import MinMaxScaler, RobustScaler
-from sklearn.decomposition import PCA
 from sentence_transformers import SentenceTransformer
+from sklearn.decomposition import PCA
 import numpy as np
 import pandas
 import math
 import os
 
 # Global model for semantic text processing
-ST_MODEL = SentenceTransformer("all-MiniLM-L6-v2")
+ST_MODEL = SentenceTransformer("all-MiniLM-L6-v2", device="cpu")
 
 
 def binaryNoMissing(rawData: pandas.DataFrame, cleanedData: pandas.DataFrame) -> None:
@@ -395,7 +395,7 @@ def stringColumns(rawData: pandas.DataFrame, cleanedData: pandas.DataFrame) -> N
     """
     This function is used to clean columns that are free-form text.
 
-    TODO For now we just use the length of the text.
+    We use a SentenceTransformer.
 
     Args:
         - rawData: The raw data
