@@ -30,7 +30,7 @@ def bestClusteringModel(data: pd.DataFrame) -> pd.DataFrame:
                 ("pca", PCA(n_components=5, random_state=42)),
                 ("cluster", KMeans(n_clusters=3, random_state=42)),
             ]
-        ): {"name": "KMeans + 5D PCA"},
+        ): {"name": "5D PCA + KMeans"},
         Pipeline(steps=[("cluster", AgglomerativeClustering(n_clusters=3))]): {
             "name": "Agglomerative Clustering"
         },
@@ -39,7 +39,7 @@ def bestClusteringModel(data: pd.DataFrame) -> pd.DataFrame:
                 ("pca", PCA(n_components=0.9, random_state=42)),
                 ("cluster", AgglomerativeClustering(n_clusters=3)),
             ]
-        ): {"name": "Agglomerative Clustering + 90% PCA"},
+        ): {"name": "90% PCA + Agglomerative Clustering"},
         Pipeline(
             steps=[
                 ("scaler", RobustScaler()),
@@ -49,7 +49,7 @@ def bestClusteringModel(data: pd.DataFrame) -> pd.DataFrame:
                     KMeans(n_clusters=3, n_init=20, max_iter=500, random_state=42),
                 ),
             ]
-        ): {"name": "Robust KMeans + 95% PCA"},
+        ): {"name": "RobustScaler + 95% PCA + KMeans"},
         Pipeline(
             steps=[
                 ("scaler", StandardScaler()),
@@ -59,28 +59,28 @@ def bestClusteringModel(data: pd.DataFrame) -> pd.DataFrame:
                     KMeans(n_clusters=3, n_init=20, max_iter=500, random_state=42),
                 ),
             ]
-        ): {"name": "KMeans + 10D PCA"},
+        ): {"name": "StandardScaler + 10D PCA + KMeans"},
         Pipeline(
             steps=[
                 ("scaler", RobustScaler()),
                 ("pca", PCA(n_components=0.9, random_state=42)),
                 ("cluster", AgglomerativeClustering(n_clusters=3, linkage="ward")),
             ]
-        ): {"name": "Agglomerative (Ward) + 95% PCA"},
+        ): {"name": "RobustScaler + 90% PCA + Agglomerative (Ward)"},
         Pipeline(
             steps=[
                 ("scaler", StandardScaler()),
                 ("pca", PCA(n_components=8, random_state=42)),
                 ("cluster", AgglomerativeClustering(n_clusters=3, linkage="average")),
             ]
-        ): {"name": "Agglomerative (Average) + 8D PCA"},
+        ): {"name": "StandardScaler + 8D PCA + Agglomerative (Average)"},
         Pipeline(
             steps=[
                 ("scaler", RobustScaler()),
                 ("svd", TruncatedSVD(n_components=10, random_state=42)),
                 ("cluster", MiniBatchKMeans(n_clusters=3, n_init=20, random_state=42)),
             ]
-        ): {"name": "MiniBatch KMeans + SVD"},
+        ): {"name": "RobustScaler + SVD + MiniBatch KMeans"},
         Pipeline(
             steps=[
                 ("scaler", StandardScaler()),
@@ -92,7 +92,7 @@ def bestClusteringModel(data: pd.DataFrame) -> pd.DataFrame:
                     ),
                 ),
             ]
-        ): {"name": "Gaussian Mixture Model"},
+        ): {"name": "StandardScaler + 95% PCA + Gaussian Mixture Model"},
     }
 
     bestScore = float("inf")
@@ -104,21 +104,27 @@ def bestClusteringModel(data: pd.DataFrame) -> pd.DataFrame:
 
         # Fit the model and get the labels
         model.fit(data)
-        labels = model.named_steps["cluster"].labels_
 
-        assert len(np.unique(labels)) == 3, "The model did not create 3 clusters"
+        try:
+            labels = model.named_steps["cluster"].labels_
+        except Exception as e:
+            labels = model.predict(data)
 
-        score = davies_bouldin_score(data, labels)
+        if len(np.unique(labels)) != 3:
+            print(f"{modelInfo['name']} did not create 3 clusters.")
 
-        print(f"{modelInfo['name']} score: {score:.4f}")
+        else:
+            score = davies_bouldin_score(data, labels)
 
-        # Plot the clusters
-        utils.graphClusters(pcaData, labels, title=modelInfo["name"])
+            print(f"{modelInfo['name']} score: {score:.4f}")
 
-        # Update the best
-        if score < bestScore:
-            bestScore = score
-            bestLabels = labels
+            # Plot the clusters
+            utils.graphClusters(pcaData, labels, title=modelInfo["name"])
+
+            # Update the best
+            if score < bestScore:
+                bestScore = score
+                bestLabels = labels
 
     # Add the best labels to the data
     data["Cluster"] = bestLabels
