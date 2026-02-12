@@ -1,6 +1,8 @@
+from sklearn.cluster import KMeans, AgglomerativeClustering, MiniBatchKMeans
 from sklearn.metrics import silhouette_samples, davies_bouldin_score
-from sklearn.cluster import KMeans, AgglomerativeClustering
-from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler, RobustScaler
+from sklearn.decomposition import PCA, TruncatedSVD
+from sklearn.mixture import GaussianMixture
 from sklearn.pipeline import Pipeline
 import pandas as pd
 import numpy as np
@@ -38,6 +40,59 @@ def bestClusteringModel(data: pd.DataFrame) -> pd.DataFrame:
                 ("cluster", AgglomerativeClustering(n_clusters=3)),
             ]
         ): {"name": "Agglomerative Clustering + 90% PCA"},
+        Pipeline(
+            steps=[
+                ("scaler", RobustScaler()),
+                ("pca", PCA(n_components=0.95, random_state=42)),
+                (
+                    "cluster",
+                    KMeans(n_clusters=3, n_init=20, max_iter=500, random_state=42),
+                ),
+            ]
+        ): {"name": "Robust KMeans + 95% PCA"},
+        Pipeline(
+            steps=[
+                ("scaler", StandardScaler()),
+                ("pca", PCA(n_components=10, random_state=42)),
+                (
+                    "cluster",
+                    KMeans(n_clusters=3, n_init=20, max_iter=500, random_state=42),
+                ),
+            ]
+        ): {"name": "KMeans + 10D PCA"},
+        Pipeline(
+            steps=[
+                ("scaler", RobustScaler()),
+                ("pca", PCA(n_components=0.9, random_state=42)),
+                ("cluster", AgglomerativeClustering(n_clusters=3, linkage="ward")),
+            ]
+        ): {"name": "Agglomerative (Ward) + 95% PCA"},
+        Pipeline(
+            steps=[
+                ("scaler", StandardScaler()),
+                ("pca", PCA(n_components=8, random_state=42)),
+                ("cluster", AgglomerativeClustering(n_clusters=3, linkage="average")),
+            ]
+        ): {"name": "Agglomerative (Average) + 8D PCA"},
+        Pipeline(
+            steps=[
+                ("scaler", RobustScaler()),
+                ("svd", TruncatedSVD(n_components=10, random_state=42)),
+                ("cluster", MiniBatchKMeans(n_clusters=3, n_init=20, random_state=42)),
+            ]
+        ): {"name": "MiniBatch KMeans + SVD"},
+        Pipeline(
+            steps=[
+                ("scaler", StandardScaler()),
+                ("pca", PCA(n_components=0.95, random_state=42)),
+                (
+                    "cluster",
+                    GaussianMixture(
+                        n_components=3, covariance_type="full", random_state=42
+                    ),
+                ),
+            ]
+        ): {"name": "Gaussian Mixture Model"},
     }
 
     bestScore = float("inf")

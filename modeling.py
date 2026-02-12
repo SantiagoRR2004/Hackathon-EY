@@ -1,6 +1,11 @@
-from sklearn.linear_model import LogisticRegression, Perceptron
+from sklearn.linear_model import LogisticRegression, Perceptron, RidgeClassifier
 from sklearn.model_selection import StratifiedKFold
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import (
+    RandomForestClassifier,
+    GradientBoostingClassifier,
+    AdaBoostClassifier,
+    ExtraTreesClassifier,
+)
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.naive_bayes import GaussianNB
@@ -48,6 +53,26 @@ def trainModel(X: pd.DataFrame, y: pd.Series) -> float:
         KNeighborsClassifier(): {"name": "K-Nearest Neighbors"},
         GaussianNB(): {"name": "Gaussian Naive Bayes"},
         SVC(random_state=42): {"name": "Support Vector Machine"},
+        LogisticRegression(random_state=42, max_iter=1000): {
+            "name": "Logistic Regression"
+        },
+        RandomForestClassifier(n_estimators=200, max_depth=15, random_state=42): {
+            "name": "Random Forest"
+        },
+        GradientBoostingClassifier(
+            n_estimators=200, learning_rate=0.1, max_depth=5, random_state=42
+        ): {"name": "Gradient Boosting"},
+        ExtraTreesClassifier(n_estimators=200, max_depth=15, random_state=42): {
+            "name": "Extra Trees"
+        },
+        AdaBoostClassifier(n_estimators=100, random_state=42): {"name": "AdaBoost"},
+        SVC(kernel="rbf", C=10, gamma="scale", random_state=42): {"name": "SVM (RBF)"},
+        SVC(kernel="poly", degree=3, C=10, random_state=42): {"name": "SVM (Poly)"},
+        KNeighborsClassifier(n_neighbors=7, weights="distance"): {
+            "name": "K-Nearest Neighbors"
+        },
+        GaussianNB(): {"name": "Gaussian Naive Bayes"},
+        RidgeClassifier(random_state=42): {"name": "Ridge Classifier"},
     }
 
     bestF1 = 0
