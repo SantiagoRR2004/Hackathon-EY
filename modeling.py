@@ -135,7 +135,7 @@ def modeling() -> dict:
         f1Score = trainModel(correlations, cleanData[c])
 
         modelsData[c] = {
-            "Features": features.tolist(),
+            "Features": features.index.tolist(),
             "F1Score": f1Score,
         }
 
