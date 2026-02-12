@@ -171,3 +171,31 @@ def plotTopCorrelatedQuestions(
         edgecolor="none",
     )
     plt.close()
+
+
+def graphClusters(data: pd.DataFrame, labels: np.ndarray, title: str):
+    """
+    Graph clusters and save them to a png.
+
+    Args:
+        - data (pd.DataFrame): The data to graph
+        - labels (np.ndarray): The cluster labels for each data point
+        - title (str): The title of the graph
+
+    Returns:
+        - None
+    """
+    currentDirectory = os.path.dirname(os.path.abspath(__file__))
+    dataFolder = os.path.join(currentDirectory, "data")
+    plt.figure()
+
+    plt.scatter(data[:, 0], data[:, 1], c=labels, cmap="viridis")
+    plt.title(f"{title} Clusters")
+    plt.xlabel("PCA Component 1")
+    plt.ylabel("PCA Component 2")
+
+    plt.savefig(
+        os.path.join(dataFolder, f"Clusters{title.replace(' ', '')}.png"),
+        bbox_inches="tight",
+    )
+    plt.close()

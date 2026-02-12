@@ -43,6 +43,8 @@ def bestClusteringModel(data: pd.DataFrame) -> pd.DataFrame:
     bestScore = float("inf")
     bestLabels = None
 
+    pcaData = PCA(n_components=2, random_state=42).fit_transform(data)
+
     for model, modelInfo in models.items():
 
         # Fit the model and get the labels
@@ -54,6 +56,9 @@ def bestClusteringModel(data: pd.DataFrame) -> pd.DataFrame:
         score = davies_bouldin_score(data, labels)
 
         print(f"{modelInfo['name']} score: {score:.4f}")
+
+        # Plot the clusters
+        utils.graphClusters(pcaData, labels, title=modelInfo["name"])
 
         # Update the best
         if score < bestScore:
