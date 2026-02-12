@@ -15,6 +15,7 @@ import pandas as pd
 import correlation
 import numpy as np
 import utils
+import json
 import os
 
 
@@ -127,11 +128,12 @@ def modeling() -> dict:
     # Load the data
     cleanData = utils.loadCSV(os.path.join(dataFolder, "mental_healthCleaned.csv"))
 
-    # Calculate the correlation matrix
-    correlationMatrix = correlation.calculateCorrelationsMatrix(cleanData)
+    # Load the indexes
+    with open(os.path.join(dataFolder, "indexes.json"), "r") as f:
+        indexes = json.load(f)
 
-    # Graph the entire correlation matrix
-    utils.graphCorrelationMatrix(correlationMatrix, "All")
+    validColumns = [v for k, v in indexes.items() if k != "Other"]
+    validColumns = set([col for cols in validColumns for col in cols])
 
     columns = [
         "Do you currently have a mental health disorder?",
@@ -139,9 +141,25 @@ def modeling() -> dict:
     ]
     modelsData = {}
 
+    # Get the correct columns
+    cleanData = cleanData[
+        [col for col in cleanData.columns if col in set(columns).union(validColumns)]
+    ]
+
+    # Calculate the correlation matrix
+    correlationMatrix = correlation.calculateCorrelationsMatrix(cleanData)
+
+    # Graph the entire correlation matrix
+    utils.graphCorrelationMatrix(correlationMatrix, "All")
+
     for c in columns:
         # Get the biggest 10 correlations with the target column
-        features = correlationMatrix[c].sort_values(ascending=False)[:10]
+        features = (
+            correlationMatrix[c]
+            .sort_values(ascending=False)
+            .loc[lambda s: s.index.isin(validColumns)]
+            .head(10)
+        )
 
         # Show top ten features
         utils.plotTopCorrelatedQuestions(

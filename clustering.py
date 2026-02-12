@@ -7,6 +7,7 @@ from sklearn.pipeline import Pipeline
 import pandas as pd
 import numpy as np
 import utils
+import json
 import os
 
 
@@ -151,6 +152,15 @@ def clustering() -> list:
 
     # Load the data
     cleanData = utils.loadCSV(os.path.join(dataFolder, "mental_healthCleaned.csv"))
+
+    # Load the indexes
+    with open(os.path.join(dataFolder, "indexes.json"), "r") as f:
+        indexes = json.load(f)
+
+    validColumns = [v for k, v in indexes.items() if k != "Other"]
+    validColumns = set([col for cols in validColumns for col in cols])
+
+    cleanData = cleanData[[col for col in cleanData.columns if col in validColumns]]
 
     # Divide columns that are vectors into their components
     for col in cleanData.columns:
