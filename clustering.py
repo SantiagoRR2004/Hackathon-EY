@@ -4,6 +4,7 @@ from sklearn.preprocessing import StandardScaler, RobustScaler
 from sklearn.decomposition import PCA, TruncatedSVD
 from sklearn.mixture import GaussianMixture
 from sklearn.pipeline import Pipeline
+import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 import utils
@@ -223,6 +224,55 @@ def clustering() -> list:
             print(f"\t{feature}")
 
         clusters.append([feature for feature, score in topFeatures[:3]])
+
+    # Load the original data
+    originalData = pd.read_csv(os.path.join(dataFolder, "mental_health.csv"))
+    originalData = originalData[
+        [col for col in originalData.columns if col in validColumns]
+    ]
+
+    # For each column graph the distribution of the values for each cluster
+    for col in originalData.columns:
+
+        colData = originalData[col].fillna("NaN")
+
+        # Unique values lower than 10
+        if colData.nunique() < 10:
+            freq = pd.crosstab(colData, cleanData["Cluster"], dropna=False)
+            matrix = freq.values
+
+            fig, ax = plt.subplots(figsize=(len(freq.columns), len(freq.index)))
+            im = ax.imshow(matrix, aspect="equal", cmap="coolwarm")
+            plt.title(col)
+
+            # Add numbers inside the cells
+            for i in range(matrix.shape[0]):
+                for j in range(matrix.shape[1]):
+                    ax.text(
+                        j,
+                        i,
+                        f"{matrix[i, j]}",
+                        ha="center",
+                        va="center",
+                        color="black",
+                    )
+
+            # Set y-axis labels
+            ax.set_yticks(range(len(freq.index)))
+            ax.set_yticklabels(freq.index)
+
+            # Remove x-axis labels
+            ax.set_xticks([])
+            plt.xlabel("Cluster")
+            ax.grid(False)
+
+            plt.savefig(
+                os.path.join(
+                    dataFolder, f"Clustering{col.replace(' ', '').replace('/', '')}.png"
+                ),
+                bbox_inches="tight",
+            )
+            plt.close()
 
     return clusters
 

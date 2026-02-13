@@ -409,8 +409,12 @@ def stringColumns(rawData: pandas.DataFrame, cleanedData: pandas.DataFrame) -> N
     for column in stringColumns:
         texts = rawData[column].fillna("").astype(str).tolist()
         embeddings = ST_MODEL.encode(texts)
-        pca = PCA(n_components=min(5, len(texts)))
+        pca = PCA(n_components=0.95)
         cleanedData[column] = list(pca.fit_transform(embeddings))
+
+        # Print number of components
+        print(f"Components: {pca.n_components_}")
+
         del rawData[column]
 
 
