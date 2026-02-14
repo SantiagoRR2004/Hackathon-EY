@@ -239,6 +239,12 @@ def clustering() -> list:
         # Unique values lower than 10
         if colData.nunique() < 10:
             freq = pd.crosstab(colData, cleanData["Cluster"], dropna=False)
+
+            # Ensure clusters are sorted and 0 is first
+            freq = freq.reindex(
+                columns=sorted(cleanData["Cluster"].unique()),
+            )
+
             matrix = freq.values
 
             fig, ax = plt.subplots(figsize=(len(freq.columns), len(freq.index)))
