@@ -20,7 +20,7 @@ For most of the categorical questions we just use one-hot encoding, but some hav
 
 The other important columns were the free form text ones of `Why or why not?` and `Why or why not?.1`. We used a SentenceTransformer to obtain the embeddings and then applied PCA to get 90% of the variance. However, initially we used the length of the response and there was still a high correlation.
 
-For purely numerical columns we used *MinMaxScaler* if they had no outliers and *RobustScaler* if they had.
+For purely numerical columns we used _MinMaxScaler_ if they had no outliers and _RobustScaler_ if they had.
 
 The final result is stored in [mental_healthCleaned.csv](../data/mental_healthCleaned.csv).
 
@@ -84,6 +84,6 @@ We can see that the second cluster 2 has most of the non-empty answers.
 
 A very important conclusion to take from this dataset is that AI specialists should be part of all stages in the data pipeline. They would recommend making choosing an option mandatory in all categorical questions. This would provide better results and is clearly possible because some questions have no NaN answers.
 
-Some forms like Google forms allow limits on numerical questions. This should have been applied to the age question, but we solved it with the *Robust Scaler*.
+Some forms like Google forms allow limits on numerical questions. This should have been applied to the age question, but we solved it with the _Robust Scaler_.
 
 A different correlation we could have applied was Normalized Mutual Information. It changed most of the submission answers but we had a submission limit.
