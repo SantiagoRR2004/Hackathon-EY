@@ -1,6 +1,6 @@
 # Predictive Model for Mental Health Risk
 
-This repository was created for a [Hackathon organized by EY](https://challenge.ey.com/challenges/innovating-mental-health-risk-assessment). The explanation for what we had to do is [this pdf](./Use%20Case%20challenge.pdf). This is the documentation we submitted:
+This repository was created for a [Hackathon organized by EY](https://challenge.ey.com/challenges/innovating-mental-health-risk-assessment). The explanation for what we had to do is [this pdf](./Use%20Case%20challenge.pdf). To fix the images and urls you need to execute [main.py](../main.py). This is the documentation we submitted:
 
 ## Introduction
 
